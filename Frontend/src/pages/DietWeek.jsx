@@ -4,7 +4,7 @@ import { useUser } from '../context/useUser';
 
 const DietWeek = () => {
   const { week } = useParams();
-  const { fitnessData } = useUser();
+  const { fitnessData, user } = useUser();
 
   if (!fitnessData) {
     return <div>Loading...</div>;
@@ -21,8 +21,32 @@ const DietWeek = () => {
   const [eatenMeals, setEatenMeals] = useState({});
   const [saveStatus, setSaveStatus] = useState(null);
 
+  const storagePrefix = useMemo(() => {
+    const token = localStorage.getItem('token') || 'guest';
+    const rawKey = user?.email || user?.user_id || user?.name || token;
+    return `fitplan_${String(rawKey).replace(/[^a-zA-Z0-9-_]/g, '_')}`;
+  }, [user]);
+  const dietStorageKey = useMemo(
+    () => `${storagePrefix}_diet_week_${week}`,
+    [storagePrefix, week]
+  );
+
   const dayKey = `day${activeDay}`;
   const activeDayData = weekDiet[dayKey];
+
+  useEffect(() => {
+    const stored = localStorage.getItem(dietStorageKey);
+    if (!stored) return;
+    try {
+      setEatenMeals(JSON.parse(stored));
+    } catch (err) {
+      console.error('Diet status load failed:', err);
+    }
+  }, [dietStorageKey]);
+
+  useEffect(() => {
+    localStorage.setItem(dietStorageKey, JSON.stringify(eatenMeals));
+  }, [dietStorageKey, eatenMeals]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -40,7 +64,17 @@ const DietWeek = () => {
 
         if (!response.ok) return;
         const data = await response.json();
-        setEatenMeals(data.logs || {});
+        const logs = data.logs || {};
+        setEatenMeals((prev) => {
+          const next = { ...prev };
+          Object.keys(logs).forEach((loggedDay) => {
+            next[loggedDay] = {
+              ...(prev[loggedDay] || {}),
+              ...logs[loggedDay]
+            };
+          });
+          return next;
+        });
       } catch (err) {
         console.error('Diet logs load failed:', err);
       }

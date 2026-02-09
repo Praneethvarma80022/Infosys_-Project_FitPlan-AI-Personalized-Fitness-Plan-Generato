@@ -11,7 +11,7 @@ router.post('/register', async (req, res) => {
       email, 
       password, 
       name,
-      age, sex, height, weight, targetWeight,
+      age, sex, pregnancyStatus, location, healthNotes, height, weight, targetWeight,
       fitnessGoal, fitnessLevel,
       healthProblems, preferredCuisines, dietaryRestrictions,
       bloodPressure, hasDiabetes,
@@ -28,13 +28,16 @@ router.post('/register', async (req, res) => {
     const userId = userResult.insertId;
     await connection.execute(
       `INSERT INTO user_profiles 
-       (user_id, name, age, sex, height_cm, start_weight_kg, current_weight_kg, target_weight_kg, fitness_goal, fitness_level, target_calories, health_problems_json, preferred_cuisines_json, dietary_restrictions_json, bp_status, has_diabetes)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (user_id, name, age, sex, pregnancy_status, location, health_notes, height_cm, start_weight_kg, current_weight_kg, target_weight_kg, fitness_goal, fitness_level, target_calories, health_problems_json, preferred_cuisines_json, dietary_restrictions_json, bp_status, has_diabetes)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         name || null,
         age,
         sex,
+        pregnancyStatus || null,
+        location || null,
+        healthNotes || null,
         height,
         weight,
         weight,

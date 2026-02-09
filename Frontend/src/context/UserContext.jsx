@@ -379,10 +379,6 @@ export const UserProvider = ({ children }) => {
 
       if (!response.ok) throw new Error(data.message || 'Registration failed');
 
-      localStorage.setItem('token', data.token);
-      setUser(formData);
-      setFitnessData(generatedPlan);
-      setIsRegistered(true);
       return true;
 
     } catch (error) {

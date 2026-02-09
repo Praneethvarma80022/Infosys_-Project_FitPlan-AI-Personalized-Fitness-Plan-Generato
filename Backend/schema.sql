@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS user_profiles (
   name VARCHAR(120),
   age INT,
   sex VARCHAR(20),
+  pregnancy_status VARCHAR(10),
+  location VARCHAR(120),
+  health_notes TEXT,
   height_cm DECIMAL(5,2),
   start_weight_kg DECIMAL(6,2),
   current_weight_kg DECIMAL(6,2),
@@ -100,3 +103,8 @@ CREATE TABLE IF NOT EXISTS meal_logs (
   UNIQUE KEY unique_meal_log (user_id, logged_date, meal_key),
   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
+
+ALTER TABLE user_profiles
+  ADD COLUMN pregnancy_status VARCHAR(10),
+  ADD COLUMN location VARCHAR(120),
+  ADD COLUMN health_notes TEXT;

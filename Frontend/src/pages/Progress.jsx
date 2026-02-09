@@ -20,6 +20,7 @@ const Progress = () => {
   const { user, fitnessData, progressSummary, predictions, fetchProgressSummary, fetchPredictions, logFeedback } = useUser();
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackResult, setFeedbackResult] = useState(null);
+  const [activityRevision, setActivityRevision] = useState(0);
 
   if (!user || !fitnessData) {
     return <div>Loading...</div>;
@@ -30,10 +31,80 @@ const Progress = () => {
     fetchPredictions();
   }, []);
 
+  useEffect(() => {
+    const handleRefresh = () => setActivityRevision(prev => prev + 1);
+    window.addEventListener('focus', handleRefresh);
+    window.addEventListener('storage', handleRefresh);
+    document.addEventListener('visibilitychange', handleRefresh);
+    return () => {
+      window.removeEventListener('focus', handleRefresh);
+      window.removeEventListener('storage', handleRefresh);
+      document.removeEventListener('visibilitychange', handleRefresh);
+    };
+  }, []);
+
   const currentWeek = 1;
   const totalWorkouts = 70; // 10 weeks * 7 days
   const completedWorkouts = progressSummary?.workoutCompletion?.completed || 0;
-  const progressPercentage = totalWorkouts > 0 ? (completedWorkouts / totalWorkouts) * 100 : 0;
+
+  const storagePrefix = useMemo(() => {
+    const token = localStorage.getItem('token') || 'guest';
+    const rawKey = user?.email || user?.user_id || user?.name || token;
+    return `fitplan_${String(rawKey).replace(/[^a-zA-Z0-9-_]/g, '_')}`;
+  }, [user]);
+
+  const activityStats = useMemo(() => {
+    const stats = {
+      workoutCompleted: 0,
+      workoutByWeek: {},
+      mealsCompleted: 0
+    };
+
+    if (!storagePrefix) return stats;
+
+    for (let week = 1; week <= 10; week += 1) {
+      let weekCount = 0;
+      for (let day = 1; day <= 7; day += 1) {
+        const key = `${storagePrefix}_workout_${week}_${day}`;
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        try {
+          const data = JSON.parse(raw);
+          if (data?.isCompleted) {
+            stats.workoutCompleted += 1;
+            weekCount += 1;
+          }
+        } catch (err) {
+          console.error('Workout status parse failed:', err);
+        }
+      }
+      stats.workoutByWeek[week] = weekCount;
+    }
+
+    for (let week = 1; week <= 10; week += 1) {
+      const key = `${storagePrefix}_diet_week_${week}`;
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const data = JSON.parse(raw) || {};
+        Object.values(data).forEach((meals) => {
+          const mealData = meals || {};
+          ['breakfast', 'lunch', 'snack', 'dinner'].forEach((mealKey) => {
+            if (mealData[mealKey]) stats.mealsCompleted += 1;
+          });
+        });
+      } catch (err) {
+        console.error('Diet status parse failed:', err);
+      }
+    }
+
+    return stats;
+  }, [storagePrefix, activityRevision]);
+
+  const mergedCompletedWorkouts = Math.max(completedWorkouts, activityStats.workoutCompleted);
+  const progressPercentage = totalWorkouts > 0 ? (mergedCompletedWorkouts / totalWorkouts) * 100 : 0;
+  const totalMeals = 10 * 7 * 4;
+  const mealProgressPercentage = totalMeals > 0 ? (activityStats.mealsCompleted / totalMeals) * 100 : 0;
 
   const startWeight = progressSummary?.profile?.startWeight || fitnessData.startWeight || user.weight;
   const currentWeight = progressSummary?.profile?.currentWeight || user.weight;
@@ -53,6 +124,14 @@ const Progress = () => {
     gray: '#9ca3af'
   };
 
+  const mockLabels = useMemo(() => (
+    ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+  ), []);
+
+  const mockWeight = useMemo(() => (
+    [startWeight, startWeight - 0.2, startWeight - 0.3, startWeight - 0.4, startWeight - 0.5, startWeight - 0.6, currentWeight]
+  ), [startWeight, currentWeight]);
+
   const weightHistory = useMemo(() => {
     if (progressRows.length > 0) {
       return progressRows.map(row => ({
@@ -61,11 +140,11 @@ const Progress = () => {
       }));
     }
 
-    return [
-      { date: startDate, value: startWeight },
-      { date: new Date().toISOString().slice(0, 10), value: currentWeight }
-    ];
-  }, [progressRows, startWeight, currentWeight, startDate]);
+    return mockLabels.map((label, index) => ({
+      date: label,
+      value: mockWeight[index]
+    }));
+  }, [progressRows, mockLabels, mockWeight]);
 
   const bmiHistory = useMemo(() => {
     if (progressRows.length > 0 && progressRows.some(row => row.bmi)) {
@@ -84,25 +163,41 @@ const Progress = () => {
   const caloriesSeries = useMemo(() => {
     const map = progressSummary?.caloriesByDate || {};
     const labels = Object.keys(map).sort();
+    if (labels.length > 0) {
+      return {
+        labels,
+        values: labels.map(label => map[label])
+      };
+    }
     return {
-      labels,
-      values: labels.map(label => map[label])
+      labels: mockLabels,
+      values: [220, 280, 260, 310, 290, 340, 300]
     };
-  }, [progressSummary]);
+  }, [progressSummary, mockLabels]);
 
   const performanceSeries = useMemo(() => {
     const labels = progressRows.map(row => row.logged_date);
     const values = progressRows.map(row => row.performance_score || row.workout_minutes || 0);
-    return { labels, values };
-  }, [progressRows]);
+    if (labels.length > 0) return { labels, values };
+    return {
+      labels: mockLabels,
+      values: [6, 7, 7, 8, 6, 8, 9]
+    };
+  }, [progressRows, mockLabels]);
 
   const predictionSeries = useMemo(() => {
     const trend = predictions?.trend || [];
+    if (trend.length > 0) {
+      return {
+        labels: trend.map(point => point.date),
+        values: trend.map(point => point.weight)
+      };
+    }
     return {
-      labels: trend.map(point => point.date),
-      values: trend.map(point => point.weight)
+      labels: mockLabels,
+      values: mockWeight.map(value => Number((value - 0.3).toFixed(1)))
     };
-  }, [predictions]);
+  }, [predictions, mockLabels, mockWeight]);
 
   const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
@@ -160,12 +255,25 @@ const Progress = () => {
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <span>Workouts Completed</span>
-              <span>{completedWorkouts}/{totalWorkouts} ({Math.round(progressPercentage)}%)</span>
+              <span>{mergedCompletedWorkouts}/{totalWorkouts} ({Math.round(progressPercentage)}%)</span>
             </div>
             <div className="progress-bar">
               <div 
                 className="progress-fill" 
                 style={{ width: `${progressPercentage}%` }}
+              ></div>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <span>Meals Logged</span>
+              <span>{activityStats.mealsCompleted}/{totalMeals} ({Math.round(mealProgressPercentage)}%)</span>
+            </div>
+            <div className="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${mealProgressPercentage}%` }}
               ></div>
             </div>
           </div>
@@ -206,11 +314,11 @@ const Progress = () => {
           
           <div className="card" style={{ textAlign: 'center' }}>
             <h3 style={{ color: 'var(--energy-orange)', fontSize: '2rem' }}>
-              {completedWorkouts}
+              {mergedCompletedWorkouts}
             </h3>
             <p style={{ color: 'var(--text-gray)' }}>Workouts Done</p>
             <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
-              {totalWorkouts - completedWorkouts} remaining
+              {Math.max(0, totalWorkouts - mergedCompletedWorkouts)} remaining
             </p>
           </div>
           
@@ -237,7 +345,7 @@ const Progress = () => {
 
         {/* Visualization Dashboard */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-          <div className="card">
+          <div className="card chart-card">
             <h3 style={{ marginBottom: '1rem' }}>📈 Weight Progress</h3>
             <Line
               data={{
@@ -256,7 +364,7 @@ const Progress = () => {
             />
           </div>
 
-          <div className="card">
+          <div className="card chart-card">
             <h3 style={{ marginBottom: '1rem' }}>📊 BMI Progress</h3>
             <Line
               data={{
@@ -275,7 +383,7 @@ const Progress = () => {
             />
           </div>
 
-          <div className="card">
+          <div className="card chart-card">
             <h3 style={{ marginBottom: '1rem' }}>🔥 Calories Burned</h3>
             <Bar
               data={{
@@ -292,7 +400,7 @@ const Progress = () => {
             />
           </div>
 
-          <div className="card">
+          <div className="card chart-card">
             <h3 style={{ marginBottom: '1rem' }}>✅ Workout Consistency</h3>
             <Bar
               data={{
@@ -300,7 +408,7 @@ const Progress = () => {
                 datasets: [
                   {
                     label: 'Workouts',
-                    data: [completedWorkouts, Math.max(0, totalWorkouts - completedWorkouts)],
+                    data: [mergedCompletedWorkouts, Math.max(0, totalWorkouts - mergedCompletedWorkouts)],
                     backgroundColor: [chartColors.green, chartColors.gray]
                   }
                 ]
@@ -309,7 +417,33 @@ const Progress = () => {
             />
           </div>
 
-          <div className="card">
+          <div className="card chart-card">
+            <h3 style={{ marginBottom: '1rem' }}>🧾 Activity Completion</h3>
+            <Bar
+              data={{
+                labels: ['Workouts', 'Meals'],
+                datasets: [
+                  {
+                    label: 'Completed',
+                    data: [mergedCompletedWorkouts, activityStats.mealsCompleted],
+                    backgroundColor: ['rgba(34, 197, 94, 0.6)', 'rgba(249, 115, 22, 0.6)']
+                  }
+                ]
+              }}
+              options={{
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    suggestedMax: Math.max(totalWorkouts, totalMeals)
+                  }
+                }
+              }}
+            />
+          </div>
+
+          <div className="card chart-card">
             <h3 style={{ marginBottom: '1rem' }}>🏋️ Exercise Performance</h3>
             <Line
               data={{
@@ -328,7 +462,7 @@ const Progress = () => {
             />
           </div>
 
-          <div className="card">
+          <div className="card chart-card">
             <h3 style={{ marginBottom: '1rem' }}>🔮 Prediction Trend</h3>
             <Line
               data={{
@@ -379,7 +513,8 @@ const Progress = () => {
             gap: '1rem'
           }}>
             {Array.from({ length: 10 }, (_, i) => i + 1).map(week => {
-              const isCompleted = week < currentWeek;
+              const weekCompleted = activityStats.workoutByWeek[week] || 0;
+              const isCompleted = weekCompleted === 7;
               const isCurrent = week === currentWeek;
               const isUpcoming = week > currentWeek;
               
@@ -398,14 +533,9 @@ const Progress = () => {
                   <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
                     {isCompleted ? '✅ Completed' : isCurrent ? '🔄 In Progress' : '⏳ Upcoming'}
                   </p>
-                  {isCompleted && (
-                    <p style={{ fontSize: '0.75rem', color: 'var(--fitness-green)' }}>
-                      7/7 workouts
-                    </p>
-                  )}
-                  {isCurrent && (
-                    <p style={{ fontSize: '0.75rem', color: 'var(--energy-orange)' }}>
-                      0/7 workouts
+                  {(isCompleted || isCurrent) && (
+                    <p style={{ fontSize: '0.75rem', color: isCompleted ? 'var(--fitness-green)' : 'var(--energy-orange)' }}>
+                      {weekCompleted}/7 workouts
                     </p>
                   )}
                 </div>
