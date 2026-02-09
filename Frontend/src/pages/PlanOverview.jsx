@@ -12,14 +12,10 @@ const PlanOverview = () => {
   const weeks = Array.from({ length: 10 }, (_, i) => i + 1);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      <header style={{ 
-        background: 'linear-gradient(135deg, var(--fitness-green), var(--energy-orange))',
-        color: 'white',
-        padding: '2rem 0'
-      }}>
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="page page--light">
+      <header className="page-hero page-hero--primary">
+        <div className="container page-hero__content">
+          <div className="page-hero__title">
             <div>
               <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
                 10-Week Plan Overview

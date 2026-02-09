@@ -8,6 +8,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(user || {});
   const [photos, setPhotos] = useState({ present: null, week1: null });
+  const [photoNames, setPhotoNames] = useState({ present: '', week1: '' });
 
   // Safety check: Don't render if data is missing
   if (!user || !fitnessData) {
@@ -95,6 +96,12 @@ const Profile = () => {
     reader.readAsDataURL(file);
   };
 
+  const handlePhotoInput = (field, file, nameKey) => {
+    if (!file) return;
+    setPhotoNames(prev => ({ ...prev, [nameKey]: file.name }));
+    handlePhotoChange(field, file);
+  };
+
   const startWeight = fitnessData?.startWeight || user.weight;
   const targetWeight = user.targetWeight || fitnessData?.targetWeight || user.weight;
   const currentWeight = user.weight;
@@ -103,14 +110,10 @@ const Profile = () => {
   const goalPercent = goalDelta > 0 ? Math.min(100, Math.max(0, (progressDelta / goalDelta) * 100)) : 0;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      <header style={{ 
-        background: 'linear-gradient(135deg, var(--fitness-green), var(--energy-orange))',
-        color: 'white',
-        padding: '2rem 0'
-      }}>
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="page page--light profile-page">
+      <header className="page-hero page-hero--primary">
+        <div className="container page-hero__content">
+          <div className="page-hero__title">
             <div>
               <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
                 Profile Settings
@@ -131,10 +134,10 @@ const Profile = () => {
       </header>
 
       <div className="container" style={{ padding: '2rem 0' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div className="profile-content">
           
           {/* Basic Information */}
-          <div className="card" style={{ marginBottom: '2rem' }}>
+          <div className="card profile-card" style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <h3>Basic Information</h3>
               {!isEditing ? (
@@ -286,7 +289,7 @@ const Profile = () => {
           </div>
 
           {/* Fitness Goals */}
-          <div className="card" style={{ marginBottom: '2rem' }}>
+          <div className="card profile-card" style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1.5rem' }}>Fitness Goals</h3>
             
             <div className="form-group">
@@ -333,7 +336,7 @@ const Profile = () => {
           </div>
 
           {/* Health & Diet */}
-          <div className="card" style={{ marginBottom: '2rem' }}>
+          <div className="card profile-card" style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1.5rem' }}>Health & Dietary Preferences</h3>
             
             <div className="form-group">
@@ -421,40 +424,54 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="card" style={{ marginBottom: '2rem' }}>
+          <div className="card profile-card" style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1.5rem' }}>Progress Photos</h3>
             <p style={{ color: 'var(--text-gray)', marginBottom: '1.5rem' }}>
               Uploads save instantly and appear across your dashboard.
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <div>
-                <label className="form-label">Present Photo</label>
-                {photos.present && (
-                  <img src={photos.present} alt="Present" style={{ width: '100%', borderRadius: '0.5rem', marginBottom: '0.5rem' }} />
+            <div className="photo-grid">
+              <div className="photo-upload">
+                <label className="form-label" htmlFor="presentPhoto">Present Photo</label>
+                {photos.present ? (
+                  <img className="photo-upload__preview" src={photos.present} alt="Present" />
+                ) : (
+                  <div className="photo-upload__placeholder">No photo uploaded yet</div>
                 )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="form-input"
-                  onChange={(e) => handlePhotoChange('presentPhoto', e.target.files[0])}
-                />
+                <div className="photo-upload__action">
+                  <input
+                    id="presentPhoto"
+                    type="file"
+                    accept="image/*"
+                    className="photo-upload__input"
+                    onChange={(e) => handlePhotoInput('presentPhoto', e.target.files[0], 'present')}
+                  />
+                  <label className="photo-upload__button" htmlFor="presentPhoto">Choose file</label>
+                  <span className="photo-upload__meta">{photoNames.present || 'No file chosen'}</span>
+                </div>
               </div>
-              <div>
-                <label className="form-label">After One Week Photo</label>
-                {photos.week1 && (
-                  <img src={photos.week1} alt="Week 1" style={{ width: '100%', borderRadius: '0.5rem', marginBottom: '0.5rem' }} />
+              <div className="photo-upload">
+                <label className="form-label" htmlFor="week1Photo">After One Week Photo</label>
+                {photos.week1 ? (
+                  <img className="photo-upload__preview" src={photos.week1} alt="Week 1" />
+                ) : (
+                  <div className="photo-upload__placeholder">No photo uploaded yet</div>
                 )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="form-input"
-                  onChange={(e) => handlePhotoChange('week1Photo', e.target.files[0])}
-                />
+                <div className="photo-upload__action">
+                  <input
+                    id="week1Photo"
+                    type="file"
+                    accept="image/*"
+                    className="photo-upload__input"
+                    onChange={(e) => handlePhotoInput('week1Photo', e.target.files[0], 'week1')}
+                  />
+                  <label className="photo-upload__button" htmlFor="week1Photo">Choose file</label>
+                  <span className="photo-upload__meta">{photoNames.week1 || 'No file chosen'}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="card" style={{ marginBottom: '2rem' }}>
+          <div className="card profile-card" style={{ marginBottom: '2rem' }}>
             <h3 style={{ marginBottom: '1.5rem' }}>Goal Tracking</h3>
             <div style={{ marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between' }}>
               <span>{startWeight} kg → {targetWeight} kg</span>
@@ -469,7 +486,7 @@ const Profile = () => {
           </div>
 
           {/* Logout Zone */}
-          <div className="card" style={{ border: '2px solid #ef4444' }}>
+          <div className="card profile-card profile-card--danger" style={{ border: '2px solid #ef4444' }}>
             <h3 style={{ color: '#ef4444', marginBottom: '1rem' }}>Logout</h3>
             <p style={{ marginBottom: '1rem', color: 'var(--text-gray)' }}>
               Sign out of your account on this device.

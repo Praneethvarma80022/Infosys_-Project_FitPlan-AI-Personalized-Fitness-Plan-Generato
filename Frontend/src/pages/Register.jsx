@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useUser } from '../context/useUser';
@@ -76,6 +76,12 @@ const Register = () => {
   const targetWeightNumber = getNumberValue(formData.targetWeight);
 
   const isPregnancyEligible = ageNumber >= 18 && ageNumber <= 50 && formData.sex === 'female';
+
+  useEffect(() => {
+    if (!isPregnancyEligible && formData.pregnancyStatus) {
+      setFormData(prev => ({ ...prev, pregnancyStatus: '' }));
+    }
+  }, [isPregnancyEligible, formData.pregnancyStatus]);
 
   const bmiValue = useMemo(() => {
     if (heightNumber > 0 && weightNumber > 0) {
@@ -187,10 +193,10 @@ const Register = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', padding: '2rem 0' }}>
+    <div className="register-page">
       <div className="container">
-        <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-          <div className="card">
+        <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+          <div className="card register-card">
             <div style={{ marginBottom: '2rem' }}>
               <h2 style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
                 Personalized Fitness Registration
@@ -362,25 +368,27 @@ const Register = () => {
 
                   <div className="form-group">
                     <label className="form-label">Pregnancy Status</label>
-                    <div className="checkbox-group">
+                    <div className="radio-group">
                       {['yes', 'no'].map(option => (
-                        <div
+                        <label
                           key={option}
-                          className={`checkbox-item ${formData.pregnancyStatus === option ? 'selected' : ''}`}
-                          style={{ opacity: isPregnancyEligible ? 1 : 0.5, cursor: isPregnancyEligible ? 'pointer' : 'not-allowed' }}
-                          onClick={() => {
-                            if (!isPregnancyEligible) return;
-                            handleInputChange('pregnancyStatus', option);
-                          }}
-                          role="button"
+                          className={`radio-pill ${formData.pregnancyStatus === option ? 'selected' : ''} ${!isPregnancyEligible ? 'disabled' : ''}`}
                         >
+                          <input
+                            type="radio"
+                            name="pregnancyStatus"
+                            value={option}
+                            disabled={!isPregnancyEligible}
+                            checked={formData.pregnancyStatus === option}
+                            onChange={() => handleInputChange('pregnancyStatus', option)}
+                          />
                           <span>{option === 'yes' ? 'Yes' : 'No'}</span>
-                        </div>
+                        </label>
                       ))}
                     </div>
                     {!isPregnancyEligible && (
                       <div style={{ color: 'var(--text-gray)', marginTop: '0.35rem', fontSize: '0.85rem' }}>
-                        Users under 18 cannot select pregnancy status. Valid range: 18-50 years.
+                        Select age 18-50 and gender female to unlock pregnancy status.
                       </div>
                     )}
                     {isPregnancyEligible && (attemptedNext || formData.pregnancyStatus) && stepErrors.pregnancyStatus && (

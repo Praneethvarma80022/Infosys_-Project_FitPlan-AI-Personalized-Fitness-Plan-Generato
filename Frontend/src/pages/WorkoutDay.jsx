@@ -240,32 +240,27 @@ const WorkoutDay = () => {
 
       <div className="container" style={{ padding: '2rem 0' }}>
         {workoutData.type === 'rest' ? (
-          <div className="card" style={{ textAlign: 'center' }}>
+          <div className="card rest-day-card">
             <h2 style={{ color: 'var(--fitness-green)', marginBottom: '1rem' }}>
               🛌 Rest Day
             </h2>
             <p style={{ fontSize: '1.25rem', marginBottom: '2rem', color: 'var(--text-gray)' }}>
               Recovery is just as important as training. Take time to rest and recharge.
             </p>
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-              gap: '1rem',
-              marginTop: '2rem'
-            }}>
-              <div style={{ padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '0.5rem' }}>
+            <div className="rest-day-grid">
+              <div className="rest-day-tip">
                 <h4>💧 Stay Hydrated</h4>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
                   Drink plenty of water throughout the day
                 </p>
               </div>
-              <div style={{ padding: '1rem', backgroundColor: '#fff7ed', borderRadius: '0.5rem' }}>
+              <div className="rest-day-tip rest-day-tip--warm">
                 <h4>🧘 Light Stretching</h4>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
                   Gentle stretches to maintain flexibility
                 </p>
               </div>
-              <div style={{ padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '0.5rem' }}>
+              <div className="rest-day-tip">
                 <h4>😴 Quality Sleep</h4>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
                   Aim for 7-9 hours of restful sleep
@@ -275,15 +270,11 @@ const WorkoutDay = () => {
           </div>
         ) : (
           <div>
-            <div className="card workout-snapshot" style={{
+            <div className="card workout-snapshot workout-snapshot-card" style={{
               marginBottom: '2rem'
             }}>
               <h3 style={{ marginBottom: '1rem' }}>Session Snapshot</h3>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                gap: '1rem'
-              }}>
+              <div className="workout-metrics-grid">
                 {[
                   { label: 'Type', value: workoutData.type.charAt(0).toUpperCase() + workoutData.type.slice(1), color: '#16a34a', icon: Activity },
                   { label: 'Duration', value: '60 min', color: '#f97316', icon: Timer },
@@ -310,11 +301,7 @@ const WorkoutDay = () => {
                 <h3 style={{ color: 'var(--energy-orange)' }}>🔥 Warm-up</h3>
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-gray)' }}>10 minutes</span>
               </div>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-                gap: '1rem'
-              }}>
+              <div className="workout-exercises-grid">
                 {workoutData.template.warmup.map((exercise, index) => (
                   <div key={index} className="workout-exercise workout-exercise--warmup">
                     <h4>{exercise.exercise}</h4>
@@ -330,11 +317,7 @@ const WorkoutDay = () => {
                 <h3 style={{ color: 'var(--fitness-green)' }}>💪 Main Workout</h3>
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-gray)' }}>40 minutes</span>
               </div>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-                gap: '1rem'
-              }}>
+              <div className="workout-exercises-grid workout-exercises-grid--main">
                 {workoutData.template.main.map((exercise, index) => (
                   <div
                     key={index}
@@ -413,11 +396,7 @@ const WorkoutDay = () => {
                 <h3 style={{ color: '#0f172a' }}>🧘 Cool-down</h3>
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-gray)' }}>10 minutes</span>
               </div>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-                gap: '1rem'
-              }}>
+              <div className="workout-exercises-grid">
                 {workoutData.template.cooldown.map((exercise, index) => (
                   <div key={index} className="workout-exercise workout-exercise--cooldown">
                     <h4>{exercise.exercise}</h4>
@@ -431,13 +410,9 @@ const WorkoutDay = () => {
         )}
 
         {/* Navigation */}
-        <div className="card">
+        <div className="card workout-nav">
           <h3 style={{ marginBottom: '1rem' }}>Week {week} Schedule</h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(7, 1fr)', 
-            gap: '0.5rem'
-          }}>
+          <div className="workout-nav__grid">
             {Array.from({ length: 7 }, (_, i) => i + 1).map(dayNum => {
               const dayWorkout = fitnessData.workoutPlan[`week${week}`][`day${dayNum}`];
               const isCurrentDay = dayNum === parseInt(day);
@@ -446,17 +421,7 @@ const WorkoutDay = () => {
                 <Link
                   key={dayNum}
                   to={`/plan/workout/${week}/${dayNum}`}
-                  style={{
-                    textDecoration: 'none',
-                    padding: '0.75rem',
-                    borderRadius: '0.75rem',
-                    textAlign: 'center',
-                    background: isCurrentDay
-                      ? 'linear-gradient(135deg, #16a34a, #22c55e)'
-                      : 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
-                    color: isCurrentDay ? 'white' : 'var(--text-dark)',
-                    border: isCurrentDay ? 'none' : '1px solid #e2e8f0'
-                  }}
+                  className={`workout-nav__day ${isCurrentDay ? 'is-active' : ''}`}
                 >
                   <div style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>
                     {dayNames[dayNum - 1].slice(0, 3)}
@@ -470,9 +435,9 @@ const WorkoutDay = () => {
           </div>
         </div>
 
-        <div className="card" style={{ marginTop: '2rem' }}>
+        <div className="card workout-log" style={{ marginTop: '2rem' }}>
           <h3 style={{ marginBottom: '1rem' }}>📝 Log Workout Performance</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+          <div className="workout-log__grid">
             <div className="form-group">
               <label className="form-label">Calories Burned</label>
               <input
@@ -506,7 +471,7 @@ const WorkoutDay = () => {
               />
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div className="workout-log__actions">
             <button
               className="btn"
               onClick={() => handleLogWorkout(false)}

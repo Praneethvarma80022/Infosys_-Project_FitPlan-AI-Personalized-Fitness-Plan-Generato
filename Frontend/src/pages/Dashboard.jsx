@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useUser } from '../context/useUser';
+import fatSlimVideo from '../data/fatslim.mp4';
+import gymVideo from '../data/GYM.mp4';
 
 const Dashboard = () => {
-  const { user, fitnessData, logout, recommendations, fetchRecommendations } = useUser();
-  const navigate = useNavigate();
+  const { user, fitnessData, recommendations, fetchRecommendations } = useUser();
+  const [isHeroVideoReady, setIsHeroVideoReady] = useState(false);
 
   // 1. SAFETY CHECK: If data is missing, show loading instead of crashing
   if (!user || !fitnessData || !fitnessData.workoutPlan) {
@@ -29,11 +31,6 @@ const Dashboard = () => {
   const bmiCategoryName = fitnessData.bmiCategory?.category || 'Calculating...';
   const bmiRisk = fitnessData.bmiCategory?.risk || 'Unknown';
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
   const getBMIPosition = (bmi) => {
     const val = parseFloat(bmi || 0);
     if (val < 18.5) return (val / 18.5) * 18.5;
@@ -53,15 +50,29 @@ const Dashboard = () => {
   const goalPercent = goalDelta > 0 ? Math.min(100, Math.max(0, (progressDelta / goalDelta) * 100)) : 0;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+    <div className="page page--light">
       {/* Header */}
-      <header style={{ 
-        background: 'linear-gradient(135deg, var(--fitness-green), var(--energy-orange))',
-        color: 'white',
-        padding: '2rem 0'
-      }}>
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="page-hero page-hero--dashboard">
+        <div className="page-hero__media" aria-hidden="true">
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            onLoadedData={() => setIsHeroVideoReady(true)}
+            onError={() => setIsHeroVideoReady(true)}
+          >
+            <source src={gymVideo} type="video/mp4" />
+          </video>
+          <div className="page-hero__media-overlay" />
+          {!isHeroVideoReady && (
+            <div className="hero-loader" aria-hidden="true">
+              <span />
+            </div>
+          )}
+        </div>
+        <div className="container page-hero__content">
+          <div className="page-hero__title">
             <div>
               <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
                 Welcome, {user.fitnessGoal ? user.fitnessGoal.replace('_', ' ') : 'User'}! 👋
@@ -70,13 +81,10 @@ const Dashboard = () => {
                 Ready for Week {currentWeek} of your journey?
               </p>
             </div>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div className="page-hero__actions">
               <Link to="/profile" className="btn" style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', textDecoration: 'none' }}>
                 Profile
               </Link>
-              <button onClick={handleLogout} className="btn" style={{ backgroundColor: 'white', color: '#dc2626', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
-                Logout
-              </button>
             </div>
           </div>
         </div>
@@ -84,16 +92,16 @@ const Dashboard = () => {
 
       <div className="container" style={{ padding: '2rem 0' }}>
         {/* Quick Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-          <div className="card" style={{ textAlign: 'center' }}>
+        <div className="dashboard-stats">
+          <div className="card stat-card">
             <h3 style={{ color: 'var(--fitness-green)', fontSize: '2rem' }}>{currentWeek}/10</h3>
             <p style={{ color: 'var(--text-gray)' }}>Weeks Completed</p>
           </div>
-          <div className="card" style={{ textAlign: 'center' }}>
+          <div className="card stat-card">
             <h3 style={{ color: 'var(--energy-orange)', fontSize: '2rem' }}>{fitnessData.targetCalories}</h3>
             <p style={{ color: 'var(--text-gray)' }}>Daily Calories</p>
           </div>
-          <div className="card" style={{ textAlign: 'center' }}>
+          <div className="card stat-card">
             <h3 style={{ color: 'var(--fitness-green)', fontSize: '2rem' }}>{fitnessData.bmi}</h3>
             <p style={{ color: 'var(--text-gray)' }}>BMI Score</p>
           </div>
@@ -170,7 +178,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+        <div className="dashboard-panels">
           <div className="card">
             <h3 style={{ marginBottom: '1rem' }}>🎯 Goal Completion</h3>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -208,6 +216,21 @@ const Dashboard = () => {
             ) : (
               <p style={{ color: 'var(--text-gray)' }}>Loading recommendations...</p>
             )}
+          </div>
+
+          <div className="card body-transform-card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ marginBottom: '1rem' }}>🌟 Body Transformation</h3>
+              <span className="body-transform__label">Week {currentWeek} → 10</span>
+            </div>
+            <p style={{ color: 'var(--text-gray)', marginBottom: '1rem' }}>
+              Stay consistent. Small steps create visible change over time.
+            </p>
+            <div className="body-transform">
+              <video className="body-transform__video" autoPlay muted loop playsInline>
+                <source src={fatSlimVideo} type="video/mp4" />
+              </video>
+            </div>
           </div>
         </div>
 

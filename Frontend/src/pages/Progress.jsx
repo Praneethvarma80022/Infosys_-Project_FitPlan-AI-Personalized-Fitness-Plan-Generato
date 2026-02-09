@@ -208,14 +208,10 @@ const Progress = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      <header style={{ 
-        background: 'linear-gradient(135deg, var(--fitness-green), var(--energy-orange))',
-        color: 'white',
-        padding: '2rem 0'
-      }}>
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="page page--light">
+      <header className="page-hero page-hero--primary">
+        <div className="container page-hero__content">
+          <div className="page-hero__title">
             <div>
               <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
                 Progress Tracking
@@ -237,7 +233,7 @@ const Progress = () => {
 
       <div className="container" style={{ padding: '2rem 0' }}>
         {/* Overall Progress */}
-        <div className="card" style={{ marginBottom: '2rem' }}>
+        <div className="card progress-overall" style={{ marginBottom: '2rem' }}>
           <h3 style={{ marginBottom: '1.5rem' }}>Overall Progress</h3>
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -296,13 +292,8 @@ const Progress = () => {
         </div>
 
         {/* Key Metrics */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-          gap: '1rem',
-          marginBottom: '2rem'
-        }}>
-          <div className="card" style={{ textAlign: 'center' }}>
+        <div className="progress-metrics">
+          <div className="card metric-card">
             <h3 style={{ color: 'var(--fitness-green)', fontSize: '2rem' }}>
               {currentWeight}kg
             </h3>
@@ -312,7 +303,7 @@ const Progress = () => {
             </p>
           </div>
           
-          <div className="card" style={{ textAlign: 'center' }}>
+          <div className="card metric-card">
             <h3 style={{ color: 'var(--energy-orange)', fontSize: '2rem' }}>
               {mergedCompletedWorkouts}
             </h3>
@@ -322,7 +313,7 @@ const Progress = () => {
             </p>
           </div>
           
-          <div className="card" style={{ textAlign: 'center' }}>
+          <div className="card metric-card">
             <h3 style={{ color: 'var(--fitness-green)', fontSize: '2rem' }}>
               {caloriesSeries.values.reduce((sum, value) => sum + value, 0)}
             </h3>
@@ -332,7 +323,7 @@ const Progress = () => {
             </p>
           </div>
           
-          <div className="card" style={{ textAlign: 'center' }}>
+          <div className="card metric-card">
             <h3 style={{ color: 'var(--energy-orange)', fontSize: '2rem' }}>
               {fitnessData.targetCalories}
             </h3>
@@ -344,7 +335,7 @@ const Progress = () => {
         </div>
 
         {/* Visualization Dashboard */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="progress-charts">
           <div className="card chart-card">
             <h3 style={{ marginBottom: '1rem' }}>📈 Weight Progress</h3>
             <Line
@@ -462,7 +453,10 @@ const Progress = () => {
             />
           </div>
 
-          <div className="card chart-card">
+        </div>
+
+        <div className="progress-compare-row">
+          <div className="card chart-card progress-prediction">
             <h3 style={{ marginBottom: '1rem' }}>🔮 Prediction Trend</h3>
             <Line
               data={{
@@ -484,34 +478,32 @@ const Progress = () => {
               Predicted target date: {predictions?.predictedTargetDate || 'Not enough data yet'}
             </p>
           </div>
-        </div>
 
-        {/* Before vs After Comparison */}
-        <div className="card" style={{ marginBottom: '2rem' }}>
-          <h3 style={{ marginBottom: '1.5rem' }}>📷 Before vs After Comparison</h3>
-          <Bar
-            data={{
-              labels: ['Start', 'Current', 'Target'],
-              datasets: [
-                {
-                  label: 'Weight (kg)',
-                  data: [startWeight, currentWeight, targetWeight],
-                  backgroundColor: [chartColors.gray, chartColors.green, chartColors.orange]
-                }
-              ]
-            }}
-            options={{ responsive: true, plugins: { legend: { display: false } } }}
-          />
+          {/* Before vs After Comparison */}
+          <div className="card progress-compare">
+            <h3 style={{ marginBottom: '1.5rem' }}>📷 Before vs After Comparison</h3>
+            <div className="progress-compare__chart">
+              <Bar
+                data={{
+                  labels: ['Start', 'Current', 'Target'],
+                  datasets: [
+                    {
+                      label: 'Weight (kg)',
+                      data: [startWeight, currentWeight, targetWeight],
+                      backgroundColor: [chartColors.gray, chartColors.green, chartColors.orange]
+                    }
+                  ]
+                }}
+                options={{ responsive: true, plugins: { legend: { display: false } } }}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Weekly Breakdown */}
-        <div className="card" style={{ marginBottom: '2rem' }}>
+        <div className="card progress-weekly" style={{ marginBottom: '2rem' }}>
           <h3 style={{ marginBottom: '1.5rem' }}>Weekly Breakdown</h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-            gap: '1rem'
-          }}>
+          <div className="weekly-grid">
             {Array.from({ length: 10 }, (_, i) => i + 1).map(week => {
               const weekCompleted = activityStats.workoutByWeek[week] || 0;
               const isCompleted = weekCompleted === 7;
@@ -519,15 +511,9 @@ const Progress = () => {
               const isUpcoming = week > currentWeek;
               
               return (
-                <div 
+                <div
                   key={week}
-                  style={{
-                    padding: '1rem',
-                    borderRadius: '0.5rem',
-                    textAlign: 'center',
-                    backgroundColor: isCompleted ? '#f0fdf4' : isCurrent ? '#fff7ed' : '#f9fafb',
-                    border: `2px solid ${isCompleted ? 'var(--fitness-green)' : isCurrent ? 'var(--energy-orange)' : 'var(--border-light)'}`
-                  }}
+                  className={`weekly-card ${isCompleted ? 'is-complete' : isCurrent ? 'is-current' : 'is-upcoming'}`}
                 >
                   <h4>Week {week}</h4>
                   <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
@@ -545,7 +531,7 @@ const Progress = () => {
         </div>
 
         {/* Sentiment Analysis & Feedback */}
-        <div className="card" style={{ marginBottom: '2rem' }}>
+        <div className="card progress-feedback" style={{ marginBottom: '2rem' }}>
           <h3 style={{ marginBottom: '1.5rem' }}>🧠 Daily Mood & Feedback</h3>
           <form onSubmit={handleFeedbackSubmit}>
             <div className="form-group">
@@ -571,18 +557,8 @@ const Progress = () => {
         {/* Achievements */}
         <div className="card" style={{ marginBottom: '2rem' }}>
           <h3 style={{ marginBottom: '1.5rem' }}>🏆 Achievements</h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-            gap: '1rem'
-          }}>
-            <div style={{ 
-              padding: '1rem', 
-              backgroundColor: '#f9fafb', 
-              borderRadius: '0.5rem',
-              border: '1px solid var(--border-light)',
-              opacity: 0.6
-            }}>
+          <div className="achievement-grid">
+            <div className="achievement-card">
               <h4>🎯 First Week Complete</h4>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
                 Complete your first week of training
@@ -592,13 +568,7 @@ const Progress = () => {
               </p>
             </div>
             
-            <div style={{ 
-              padding: '1rem', 
-              backgroundColor: '#f9fafb', 
-              borderRadius: '0.5rem',
-              border: '1px solid var(--border-light)',
-              opacity: 0.6
-            }}>
+            <div className="achievement-card">
               <h4>💪 Strength Builder</h4>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
                 Complete 10 strength training sessions
@@ -608,13 +578,7 @@ const Progress = () => {
               </p>
             </div>
             
-            <div style={{ 
-              padding: '1rem', 
-              backgroundColor: '#f9fafb', 
-              borderRadius: '0.5rem',
-              border: '1px solid var(--border-light)',
-              opacity: 0.6
-            }}>
+            <div className="achievement-card">
               <h4>🔥 Calorie Crusher</h4>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
                 Burn 1000 calories through workouts

@@ -140,14 +140,10 @@ const DietWeek = () => {
   }, [activeDayData, eatenMeals, dayKey]);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      <header style={{ 
-        background: 'linear-gradient(135deg, #0f172a, #111827 45%, #f97316 100%)',
-        color: 'white',
-        padding: '2.5rem 0'
-      }}>
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="page page--light">
+      <header className="page-hero page-hero--dark">
+        <div className="container page-hero__content">
+          <div className="page-hero__title">
             <div>
               <p style={{ textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '0.75rem', opacity: 0.7 }}>
                 Nutrition Plan

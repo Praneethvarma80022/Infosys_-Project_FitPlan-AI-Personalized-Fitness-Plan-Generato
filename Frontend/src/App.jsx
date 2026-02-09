@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom'; // Removed BrowserRouter import
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'; // Removed BrowserRouter import
 import { UserProvider } from './context/UserContext';
 import { useUser } from './context/useUser';
 
@@ -12,6 +12,9 @@ import DietWeek from './pages/DietWeek';
 import Progress from './pages/Progress';
 import Profile from './pages/Profile';
 import PlanOverview from './pages/PlanOverview';
+import MentalHealthWidget from './components/MentalHealthWidget';
+import SiteNavbar from './components/SiteNavbar';
+import SiteFooter from './components/SiteFooter';
 
 const ProtectedRoute = ({ children }) => {
   const { isRegistered, loading } = useUser();
@@ -45,12 +48,28 @@ const AppRoutes = () => {
   );
 };
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname]);
+
+  return null;
+};
+
 function App() {
   return (
     <UserProvider>
       {/* Router was removed from here because it's now in main.jsx */}
-      <div className="App">
-        <AppRoutes />
+      <div className="App app-shell">
+        <SiteNavbar />
+        <main className="app-main">
+          <ScrollToTop />
+          <AppRoutes />
+        </main>
+        <SiteFooter />
+        <MentalHealthWidget />
       </div>
     </UserProvider>
   );

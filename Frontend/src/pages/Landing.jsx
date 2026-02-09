@@ -1,39 +1,25 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../context/useUser';
+import gymVideo from '../data/GYM.mp4';
 
 const Landing = () => {
   const { isRegistered } = useUser();
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #22c55e 0%, #f97316 100%)' }}>
-      <div className="container" style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
-        <header style={{ textAlign: 'center', marginBottom: '4rem' }}>
-          <h1 style={{ 
-            fontSize: '3rem', 
-            fontWeight: 'bold', 
-            color: 'white', 
-            marginBottom: '1rem',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-          }}>
-            FitPlan AI
-          </h1>
-          <p style={{ 
-            fontSize: '1.25rem', 
-            color: 'white', 
-            opacity: 0.9,
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-          }}>
-            Your Personal Fitness & Diet Planner
-          </p>
+    <div className="landing-page">
+      <div className="landing-video" aria-hidden="true">
+        <video autoPlay muted loop playsInline>
+          <source src={gymVideo} type="video/mp4" />
+        </video>
+      </div>
+      <div className="container landing-page__content">
+        <header className="landing-hero">
+          <h1>FitPlan AI</h1>
+          <p>Your Personal Fitness & Diet Planner</p>
         </header>
 
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
-          gap: '2rem',
-          marginBottom: '4rem'
-        }}>
+        <div className="landing-grid">
           <div className="card">
             <h3 style={{ color: 'var(--fitness-green)', marginBottom: '1rem' }}>
               🎯 Personalized Plans
@@ -62,7 +48,7 @@ const Landing = () => {
           </div>
         </div>
 
-        <div style={{ textAlign: 'center' }}>
+        <div className="landing-cta">
           {isRegistered ? (
             <Link to="/dashboard" className="btn btn-primary" style={{ 
               fontSize: '1.25rem', 
@@ -84,12 +70,7 @@ const Landing = () => {
           )}
         </div>
 
-        <div style={{ 
-          marginTop: '4rem', 
-          textAlign: 'center',
-          color: 'white',
-          opacity: 0.8
-        }}>
+        <div className="landing-note">
           <p>✨ Rule-based AI • No signup required • Instant results</p>
         </div>
       </div>

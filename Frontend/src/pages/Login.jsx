@@ -19,8 +19,8 @@ const Login = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f9fafb' }}>
-      <div className="card" style={{ width: '100%', maxWidth: '400px' }}>
+    <div className="auth-page">
+      <div className="card auth-card">
         <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Login</h2>
         {error && <div style={{ color: 'red', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
         
