@@ -1,0 +1,232 @@
+{
+  "workoutTemplates": {
+    "cardio": {
+      "warmup": [
+        { "exercise": "Walking, Treadmill", "duration": "5 min" },
+        { "exercise": "Arm Circles", "duration": "5 min" }
+      ],
+      "main": [
+        { "exercise": "Bicycling, Stationary", "duration": "20 min", "intensity": "moderate" },
+        { "exercise": "Elliptical Trainer", "duration": "15 min", "intensity": "moderate" },
+        { "exercise": "Rowing, Stationary", "duration": "10 min", "intensity": "low" }
+      ],
+      "cooldown": [
+        { "exercise": "Walking, Treadmill", "duration": "5 min" },
+        { "exercise": "Standing Hamstring and Calf Stretch", "duration": "5 min" }
+      ]
+    },
+    "strength": {
+      "warmup": [
+        { "exercise": "Walking, Treadmill", "duration": "5 min" },
+        { "exercise": "Dynamic Back Stretch", "duration": "5 min" }
+      ],
+      "main": [
+        { "exercise": "Pushups", "sets": 3, "reps": "8-12", "rest": "60s" },
+        { "exercise": "Bodyweight Squat", "sets": 3, "reps": "10-12", "rest": "60s" },
+        { "exercise": "Plank", "sets": 3, "duration": "30-45s", "rest": "45s" },
+        { "exercise": "Bodyweight Walking Lunge", "sets": 3, "reps": "8-10 each leg", "rest": "60s" }
+      ],
+      "cooldown": [
+        { "exercise": "Childs Pose", "duration": "5 min" },
+        { "exercise": "Standing Elevated Quad Stretch", "duration": "5 min" }
+      ]
+    },
+    "hiit": {
+      "warmup": [
+        { "exercise": "Walking, Treadmill", "duration": "5 min" },
+        { "exercise": "Arm Circles", "duration": "3 min" },
+        { "exercise": "Dynamic Back Stretch", "duration": "2 min" }
+      ],
+      "main": [
+        { "exercise": "Rope Jumping", "work": "30s", "rest": "30s", "rounds": 4 },
+        { "exercise": "Mountain Climbers", "work": "30s", "rest": "30s", "rounds": 4 },
+        { "exercise": "Freehand Jump Squat", "work": "30s", "rest": "30s", "rounds": 3 },
+        { "exercise": "Star Jump", "work": "30s", "rest": "30s", "rounds": 3 }
+      ],
+      "cooldown": [
+        { "exercise": "Walking, Treadmill", "duration": "5 min" },
+        { "exercise": "Childs Pose", "duration": "5 min" }
+      ]
+    },
+    "flexibility": {
+      "warmup": [
+        { "exercise": "Cat Stretch", "duration": "5 min" },
+        { "exercise": "Arm Circles", "duration": "5 min" }
+      ],
+      "main": [
+        { "exercise": "Childs Pose", "duration": "10 min" },
+        { "exercise": "Seated Hamstring and Calf Stretch", "duration": "10 min" },
+        { "exercise": "Groin and Back Stretch", "duration": "5 min" }
+      ],
+      "cooldown": [
+        { "exercise": "Overhead Stretch", "duration": "5 min" },
+        { "exercise": "Spinal Stretch", "duration": "5 min" }
+      ]
+    },
+    "compound": {
+      "warmup": [
+        { "exercise": "Walking, Treadmill", "duration": "5 min" },
+        { "exercise": "Dynamic Back Stretch", "duration": "5 min" }
+      ],
+      "main": [
+        { "exercise": "Barbell Squat", "sets": 4, "reps": "6-8", "rest": "90s" },
+        { "exercise": "Barbell Bench Press - Medium Grip", "sets": 4, "reps": "6-8", "rest": "90s" },
+        { "exercise": "Bent Over Barbell Row", "sets": 4, "reps": "8-10", "rest": "90s" },
+        { "exercise": "Romanian Deadlift", "sets": 3, "reps": "8-10", "rest": "90s" }
+      ],
+      "cooldown": [
+        { "exercise": "Childs Pose", "duration": "5 min" },
+        { "exercise": "Standing Hamstring and Calf Stretch", "duration": "5 min" }
+      ]
+    },
+    "isolation": {
+      "warmup": [
+        { "exercise": "Walking, Treadmill", "duration": "5 min" },
+        { "exercise": "Arm Circles", "duration": "5 min" }
+      ],
+      "main": [
+        { "exercise": "Dumbbell Bicep Curl", "sets": 3, "reps": "10-12", "rest": "60s" },
+        { "exercise": "Dumbbell Tricep Extension -Pronated Grip", "sets": 3, "reps": "10-12", "rest": "60s" },
+        { "exercise": "Dumbbell Lying Rear Lateral Raise", "sets": 3, "reps": "12-15", "rest": "60s" },
+        { "exercise": "Standing Calf Raises", "sets": 3, "reps": "12-15", "rest": "60s" }
+      ],
+      "cooldown": [
+        { "exercise": "Standing Biceps Stretch", "duration": "5 min" },
+        { "exercise": "Triceps Stretch", "duration": "5 min" }
+      ]
+    },
+    "endurance": {
+      "warmup": [
+        { "exercise": "Walking, Treadmill", "duration": "5 min" },
+        { "exercise": "Arm Circles", "duration": "5 min" }
+      ],
+      "main": [
+        { "exercise": "Rowing, Stationary", "duration": "20 min", "intensity": "moderate" },
+        { "exercise": "Bicycling, Stationary", "duration": "20 min", "intensity": "moderate" },
+        { "exercise": "Walking, Treadmill", "duration": "15 min", "intensity": "moderate" }
+      ],
+      "cooldown": [
+        { "exercise": "Standing Hamstring and Calf Stretch", "duration": "5 min" },
+        { "exercise": "Cat Stretch", "duration": "5 min" }
+      ]
+    },
+    "core": {
+      "warmup": [
+        { "exercise": "Cat Stretch", "duration": "3 min" },
+        { "exercise": "Arm Circles", "duration": "3 min" }
+      ],
+      "main": [
+        { "exercise": "Plank", "sets": 3, "duration": "30-45s", "rest": "45s" },
+        { "exercise": "Crunches", "sets": 3, "reps": "12-15", "rest": "45s" },
+        { "exercise": "Reverse Crunch", "sets": 3, "reps": "10-12", "rest": "45s" },
+        { "exercise": "Side Bridge", "sets": 3, "duration": "20-30s", "rest": "45s" }
+      ],
+      "cooldown": [
+        { "exercise": "Spinal Stretch", "duration": "5 min" },
+        { "exercise": "Childs Pose", "duration": "5 min" }
+      ]
+    },
+    "mobility": {
+      "warmup": [
+        { "exercise": "Cat Stretch", "duration": "5 min" },
+        { "exercise": "Arm Circles", "duration": "5 min" }
+      ],
+      "main": [
+        { "exercise": "Groin and Back Stretch", "duration": "8 min" },
+        { "exercise": "Shoulder Stretch", "duration": "6 min" },
+        { "exercise": "Hamstring Stretch", "duration": "6 min" }
+      ],
+      "cooldown": [
+        { "exercise": "Overhead Stretch", "duration": "5 min" },
+        { "exercise": "Spinal Stretch", "duration": "5 min" }
+      ]
+    }
+  },
+  "weeklySchedule": {
+    "beginner": {
+      "pattern": ["strength", "cardio", "rest", "strength", "flexibility", "cardio", "rest"]
+    },
+    "intermediate": {
+      "pattern": ["strength", "cardio", "strength", "hiit", "strength", "cardio", "rest"]
+    },
+    "advanced": {
+      "pattern": ["strength", "hiit", "strength", "cardio", "strength", "hiit", "flexibility"]
+    }
+  },
+  "goalSchedules": {
+    "weight_loss": {
+      "beginner": ["cardio", "strength", "cardio", "hiit", "strength", "cardio", "rest"],
+      "intermediate": ["cardio", "strength", "hiit", "cardio", "strength", "hiit", "rest"],
+      "advanced": ["hiit", "strength", "cardio", "hiit", "strength", "cardio", "flexibility"]
+    },
+    "muscle_gain": {
+      "beginner": ["strength", "compound", "rest", "strength", "isolation", "strength", "rest"],
+      "intermediate": ["compound", "strength", "isolation", "rest", "strength", "compound", "rest"],
+      "advanced": ["compound", "strength", "isolation", "strength", "compound", "isolation", "flexibility"]
+    },
+    "fat_loss_toning": {
+      "beginner": ["strength", "cardio", "rest", "hiit", "strength", "cardio", "rest"],
+      "intermediate": ["strength", "hiit", "cardio", "strength", "hiit", "cardio", "rest"],
+      "advanced": ["hiit", "strength", "cardio", "hiit", "strength", "cardio", "flexibility"]
+    },
+    "general_fitness": {
+      "beginner": ["strength", "cardio", "rest", "mobility", "strength", "cardio", "rest"],
+      "intermediate": ["strength", "cardio", "strength", "mobility", "strength", "cardio", "rest"],
+      "advanced": ["strength", "hiit", "cardio", "strength", "flexibility", "cardio", "mobility"]
+    },
+    "endurance": {
+      "beginner": ["cardio", "endurance", "rest", "cardio", "endurance", "cardio", "rest"],
+      "intermediate": ["endurance", "cardio", "strength", "endurance", "cardio", "endurance", "rest"],
+      "advanced": ["endurance", "cardio", "hiit", "endurance", "cardio", "endurance", "flexibility"]
+    }
+  },
+  "weekOneAlternatives": {
+    "Pushups": { "sets": 2, "reps": "6-10", "rest": "60s" },
+    "Bodyweight Squat": { "sets": 2, "reps": "8-10", "rest": "60s" },
+    "Bodyweight Walking Lunge": { "sets": 2, "reps": "6-8 each leg", "rest": "60s" },
+    "Plank": { "sets": 2, "duration": "20-30s", "rest": "45s" },
+    "Rope Jumping": { "exercise": "Walking, Treadmill", "duration": "8-10 min", "intensity": "low" },
+    "Freehand Jump Squat": { "exercise": "Bodyweight Squat", "sets": 2, "reps": "8-10", "rest": "60s" },
+    "Star Jump": { "exercise": "Step-up with Knee Raise", "sets": 2, "reps": "8-10 each leg", "rest": "60s" },
+    "Bicycling, Stationary": { "duration": "15 min", "intensity": "low" },
+    "Elliptical Trainer": { "duration": "10 min", "intensity": "low" },
+    "Rowing, Stationary": { "duration": "10 min", "intensity": "low" },
+    "Barbell Squat": { "exercise": "Bodyweight Squat", "sets": 3, "reps": "10-12", "rest": "75s" },
+    "Barbell Bench Press - Medium Grip": { "exercise": "Pushups", "sets": 3, "reps": "8-12", "rest": "60s" },
+    "Bent Over Barbell Row": { "exercise": "One-Arm Dumbbell Row", "sets": 3, "reps": "10-12", "rest": "60s" },
+    "Romanian Deadlift": { "exercise": "Pelvic Tilt Into Bridge", "sets": 3, "reps": "12-15", "rest": "60s" }
+  },
+  "modifications": {
+    "knee_pain": {
+      "replace": {
+        "Freehand Jump Squat": "Bodyweight Squat",
+        "Rope Jumping": "Walking, Treadmill",
+        "Star Jump": "Step-up with Knee Raise",
+        "Bodyweight Walking Lunge": "Sit Squats"
+      }
+    },
+    "back_pain": {
+      "replace": {
+        "Romanian Deadlift": "Pelvic Tilt Into Bridge",
+        "Bent Over Barbell Row": "Seated Cable Rows",
+        "Barbell Squat": "Bodyweight Squat",
+        "Overhead Press": "Seated Dumbbell Press"
+      }
+    },
+    "heart_condition": {
+      "replace": {
+        "Rope Jumping": "Walking, Treadmill",
+        "Freehand Jump Squat": "Bodyweight Squat",
+        "Star Jump": "Walking, Treadmill",
+        "Rowing, Stationary": "Walking, Treadmill"
+      }
+    },
+    "asthma": {
+      "replace": {
+        "Rope Jumping": "Walking, Treadmill",
+        "Star Jump": "Bicycling, Stationary",
+        "Rowing, Stationary": "Walking, Treadmill"
+      }
+    }
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "mealTemplates": {
+    "indian": {
+      "breakfast": [
+        { "name": "Oats Upma", "calories": 250, "protein": 8, "carbs": 45, "fat": 5 },
+        { "name": "Poha with Vegetables", "calories": 200, "protein": 6, "carbs": 35, "fat": 4 },
+        { "name": "Idli Sambar", "calories": 180, "protein": 7, "carbs": 32, "fat": 3 }
+      ],
+      "lunch": [
+        { "name": "Dal Rice with Vegetables", "calories": 400, "protein": 15, "carbs": 65, "fat": 8 },
+        { "name": "Chicken Curry with Roti", "calories": 450, "protein": 25, "carbs": 40, "fat": 18 },
+        { "name": "Rajma Rice", "calories": 380, "protein": 18, "carbs": 55, "fat": 10 }
+      ],
+      "snack": [
+        { "name": "Mixed Nuts", "calories": 150, "protein": 6, "carbs": 8, "fat": 12 },
+        { "name": "Fruit Chaat", "calories": 120, "protein": 2, "carbs": 28, "fat": 1 },
+        { "name": "Roasted Chana", "calories": 100, "protein": 8, "carbs": 15, "fat": 2 }
+      ],
+      "dinner": [
+        { "name": "Grilled Fish with Vegetables", "calories": 350, "protein": 30, "carbs": 20, "fat": 15 },
+        { "name": "Paneer Sabzi with Roti", "calories": 400, "protein": 20, "carbs": 35, "fat": 20 },
+        { "name": "Vegetable Khichdi", "calories": 280, "protein": 12, "carbs": 45, "fat": 6 }
+      ]
+    },
+    "continental": {
+      "breakfast": [
+        { "name": "Scrambled Eggs with Toast", "calories": 300, "protein": 18, "carbs": 25, "fat": 15 },
+        { "name": "Greek Yogurt with Berries", "calories": 200, "protein": 15, "carbs": 20, "fat": 8 },
+        { "name": "Oatmeal with Banana", "calories": 250, "protein": 8, "carbs": 45, "fat": 5 }
+      ],
+      "lunch": [
+        { "name": "Grilled Chicken Salad", "calories": 400, "protein": 35, "carbs": 15, "fat": 22 },
+        { "name": "Quinoa Bowl", "calories": 380, "protein": 16, "carbs": 50, "fat": 12 },
+        { "name": "Turkey Sandwich", "calories": 350, "protein": 25, "carbs": 35, "fat": 12 }
+      ],
+      "snack": [
+        { "name": "Apple with Almond Butter", "calories": 180, "protein": 6, "carbs": 20, "fat": 10 },
+        { "name": "Protein Smoothie", "calories": 200, "protein": 20, "carbs": 15, "fat": 8 },
+        { "name": "Hummus with Veggies", "calories": 120, "protein": 5, "carbs": 12, "fat": 6 }
+      ],
+      "dinner": [
+        { "name": "Baked Salmon with Broccoli", "calories": 400, "protein": 35, "carbs": 15, "fat": 22 },
+        { "name": "Lean Beef with Sweet Potato", "calories": 450, "protein": 30, "carbs": 35, "fat": 18 },
+        { "name": "Vegetable Stir-fry with Tofu", "calories": 320, "protein": 18, "carbs": 25, "fat": 16 }
+      ]
+    }
+  },
+  "dietaryModifications": {
+    "vegetarian": {
+      "replace": {
+        "Chicken": "Paneer/Tofu",
+        "Fish": "Legumes",
+        "Beef": "Mushrooms"
+      }
+    },
+    "vegan": {
+      "replace": {
+        "Chicken": "Tofu",
+        "Fish": "Tempeh",
+        "Dairy": "Plant-based alternatives",
+        "Eggs": "Chickpea flour"
+      }
+    },
+    "keto": {
+      "macroRatio": { "carbs": 0.05, "protein": 0.25, "fat": 0.7 },
+      "restrictions": ["rice", "bread", "pasta", "sugar"]
+    },
+    "gluten_free": {
+      "replace": {
+        "Wheat": "Rice/Quinoa",
+        "Bread": "Gluten-free bread",
+        "Pasta": "Rice noodles"
+      }
+    }
+  },
+  "weeklyMealPlan": {
+    "week1-2": "foundation",
+    "week3-4": "progression",
+    "week5-6": "optimization",
+    "week7-8": "intensification",
+    "week9-10": "peak"
+  }
+}

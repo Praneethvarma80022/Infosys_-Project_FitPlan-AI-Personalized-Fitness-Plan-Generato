@@ -1,0 +1,92 @@
+{
+  "goals": {
+    "weight_loss": {
+      "name": "Weight Loss",
+      "calorieMultiplier": 0.85,
+      "workoutFocus": ["cardio", "hiit", "strength"],
+      "workoutRatio": [0.4, 0.3, 0.3]
+    },
+    "muscle_gain": {
+      "name": "Muscle Gain",
+      "calorieMultiplier": 1.15,
+      "workoutFocus": ["strength", "compound", "isolation"],
+      "workoutRatio": [0.6, 0.3, 0.1]
+    },
+    "fat_loss_toning": {
+      "name": "Fat Loss + Toning",
+      "calorieMultiplier": 0.9,
+      "workoutFocus": ["strength", "hiit", "cardio"],
+      "workoutRatio": [0.4, 0.35, 0.25]
+    },
+    "general_fitness": {
+      "name": "General Fitness",
+      "calorieMultiplier": 1.0,
+      "workoutFocus": ["cardio", "strength", "flexibility"],
+      "workoutRatio": [0.4, 0.4, 0.2]
+    },
+    "endurance": {
+      "name": "Endurance Improvement",
+      "calorieMultiplier": 1.1,
+      "workoutFocus": ["cardio", "endurance", "strength"],
+      "workoutRatio": [0.5, 0.3, 0.2]
+    }
+  },
+  "fitnessLevels": {
+    "beginner": {
+      "name": "Beginner",
+      "intensityMultiplier": 0.7,
+      "workoutTypes": ["bodyweight", "basic_cardio", "light_weights"],
+      "restDays": 2
+    },
+    "intermediate": {
+      "name": "Intermediate",
+      "intensityMultiplier": 1.0,
+      "workoutTypes": ["moderate_weights", "compound_movements", "interval_training"],
+      "restDays": 1
+    },
+    "advanced": {
+      "name": "Advanced",
+      "intensityMultiplier": 1.3,
+      "workoutTypes": ["heavy_weights", "complex_movements", "high_intensity"],
+      "restDays": 1
+    }
+  },
+  "healthConditions": {
+    "knee_pain": {
+      "restrictions": ["jumping", "high_impact"],
+      "alternatives": ["swimming", "cycling", "upper_body"]
+    },
+    "back_pain": {
+      "restrictions": ["heavy_deadlifts", "overhead_press"],
+      "alternatives": ["supported_exercises", "core_strengthening"]
+    },
+    "heart_condition": {
+      "restrictions": ["high_intensity", "max_heart_rate"],
+      "alternatives": ["low_intensity_cardio", "walking"]
+    },
+    "diabetes": {
+      "restrictions": [],
+      "alternatives": [],
+      "dietModifications": ["low_sugar", "complex_carbs"]
+    },
+    "asthma": {
+      "restrictions": ["prolonged_cardio"],
+      "alternatives": ["interval_training", "strength_focus"]
+    }
+  },
+  "weeklyProgression": {
+    "1-2": { "intensityMultiplier": 0.6, "phase": "Foundation" },
+    "3-4": { "intensityMultiplier": 0.75, "phase": "Light Progression" },
+    "5-6": { "intensityMultiplier": 0.9, "phase": "Moderate Intensity" },
+    "7-8": { "intensityMultiplier": 1.1, "phase": "High Intensity" },
+    "9-10": { "intensityMultiplier": 1.25, "phase": "Peak Conditioning" }
+  },
+  "calorieRules": {
+    "baseBMR": {
+      "male": { "formula": "(10 * weight) + (6.25 * height) - (5 * age) + 5" },
+      "female": { "formula": "(10 * weight) + (6.25 * height) - (5 * age) - 161" },
+      "other": { "formula": "(10 * weight) + (6.25 * height) - (5 * age) - 78" }
+    },
+    "activityMultiplier": 1.6
+  }
+}
