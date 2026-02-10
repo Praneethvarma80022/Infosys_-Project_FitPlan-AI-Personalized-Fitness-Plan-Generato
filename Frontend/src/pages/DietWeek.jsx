@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useUser } from '../context/useUser';
+import dietsData from '../data/diets.json';
 
 const DietWeek = () => {
   const { week } = useParams();
@@ -20,6 +21,22 @@ const DietWeek = () => {
   const [activeDay, setActiveDay] = useState(1);
   const [eatenMeals, setEatenMeals] = useState({});
   const [saveStatus, setSaveStatus] = useState(null);
+
+  const quantityByName = useMemo(() => {
+    const lookup = {};
+    const templates = dietsData?.mealTemplates || {};
+    Object.values(templates).forEach((cuisine) => {
+      if (!cuisine) return;
+      ['breakfast', 'lunch', 'snack', 'dinner'].forEach((slot) => {
+        (cuisine[slot] || []).forEach((meal) => {
+          if (meal?.name && meal?.quantity) {
+            lookup[meal.name] = meal.quantity;
+          }
+        });
+      });
+    });
+    return lookup;
+  }, []);
 
   const storagePrefix = useMemo(() => {
     const token = localStorage.getItem('token') || 'guest';
@@ -145,52 +162,38 @@ const DietWeek = () => {
         <div className="container page-hero__content">
           <div className="page-hero__title">
             <div>
-              <p style={{ textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '0.75rem', opacity: 0.7 }}>
+              <p className="page-hero__kicker">
                 Nutrition Plan
               </p>
-              <h1 style={{ fontSize: '2.25rem', marginBottom: '0.5rem' }}>
+              <h1 className="page-hero__headline">
                 Week {week} Diet Plan
               </h1>
-              <p style={{ opacity: 0.9 }}>
+              <p className="page-hero__lede">
                 Your personalized meal plan for optimal results
               </p>
             </div>
-            <Link to="/dashboard" className="btn" style={{ 
-              backgroundColor: 'rgba(255,255,255,0.2)', 
-              color: 'white',
-              textDecoration: 'none'
-            }}>
+            <Link to="/dashboard" className="btn btn-ghost btn-link">
               ← Dashboard
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="container" style={{ padding: '2rem 0' }}>
-        <div className="card" style={{ marginBottom: '2rem', background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.08), rgba(249, 115, 22, 0.08))' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Week {week} Overview</h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
-            gap: '1rem'
-          }}>
+      <div className="container section-spacing">
+        <div className="card diet-overview">
+          <h3 className="section-title">Week {week} Overview</h3>
+          <div className="diet-overview-grid">
             {[
-              { label: 'Target Calories', value: `${fitnessData.targetCalories}/day`, color: '#f97316' },
-              { label: 'Meals per Day', value: '4 meals', color: '#22c55e' },
-              { label: 'Avg Protein', value: '~25g per meal', color: '#0f172a' },
-              { label: 'Variety', value: 'Rotating menu', color: '#22c55e' }
+              { label: 'Target Calories', value: `${fitnessData.targetCalories}/day`, tone: 'orange' },
+              { label: 'Meals per Day', value: '4 meals', tone: 'green' },
+              { label: 'Avg Protein', value: '~25g per meal', tone: 'neutral' },
+              { label: 'Variety', value: 'Rotating menu', tone: 'green' }
             ].map(item => (
-              <div key={item.label} style={{
-                padding: '1rem',
-                borderRadius: '0.75rem',
-                backgroundColor: 'white',
-                border: '1px solid rgba(15, 23, 42, 0.08)',
-                textAlign: 'center'
-              }}>
-                <p style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-gray)' }}>
+              <div key={item.label} className="diet-overview-item">
+                <p className="diet-overview-label">
                   {item.label}
                 </p>
-                <p style={{ fontSize: '1.1rem', fontWeight: '700', color: item.color }}>
+                <p className={`diet-overview-value diet-overview-value--${item.tone}`}>
                   {item.value}
                 </p>
               </div>
@@ -198,21 +201,15 @@ const DietWeek = () => {
           </div>
         </div>
 
-        <div className="card" style={{ marginBottom: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Select Day</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '0.75rem' }}>
+        <div className="card card--spaced">
+          <h3 className="section-title">Select Day</h3>
+          <div className="day-selector">
             {Array.from({ length: 7 }, (_, i) => i + 1).map(day => (
               <button
                 key={day}
                 type="button"
                 onClick={() => setActiveDay(day)}
-                className="btn"
-                style={{
-                  padding: '0.6rem 0.5rem',
-                  background: activeDay === day ? 'linear-gradient(135deg, #f97316, #fb923c)' : '#f8fafc',
-                  color: activeDay === day ? 'white' : '#0f172a',
-                  border: activeDay === day ? 'none' : '1px solid #e2e8f0'
-                }}
+                className={`day-pill${activeDay === day ? ' is-active' : ''}`}
               >
                 {dayNames[day - 1].slice(0, 3)}
               </button>
@@ -220,145 +217,133 @@ const DietWeek = () => {
           </div>
         </div>
 
-        <div className="card" style={{ marginBottom: '2rem', borderTop: '4px solid #f97316' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div className="card diet-day-card">
+          <div className="diet-day-header">
             <div>
-              <h3 style={{ color: '#0f172a' }}>{dayNames[activeDay - 1]}</h3>
-              <p style={{ color: 'var(--text-gray)' }}>Tap “Eaten” to track your intake.</p>
+              <h3>{dayNames[activeDay - 1]}</h3>
+              <p className="diet-day-meta">Tap “Eaten” to track your intake.</p>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontWeight: '600' }}>{activeDayData.totalCalories} cal</p>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-gray)' }}>Target</p>
+            <div className="diet-target">
+              <p className="diet-target__value">{activeDayData.totalCalories} cal</p>
+              <p className="diet-target__label">Target</p>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gap: '1rem' }}>
+          <div className="diet-meals">
             {[
               { key: 'breakfast', label: '🌅 Breakfast', tone: '#f0fdf4', border: '#bbf7d0' },
               { key: 'lunch', label: '☀️ Lunch', tone: '#fff7ed', border: '#fed7aa' },
               { key: 'snack', label: '🍎 Evening Snack', tone: '#f0fdf4', border: '#bbf7d0' },
               { key: 'dinner', label: '🌙 Dinner', tone: '#fff7ed', border: '#fed7aa' }
-            ].map(section => (
-              <div key={section.key} style={{ padding: '0.75rem', borderRadius: '0.75rem', border: `1px solid ${section.border}`, backgroundColor: section.tone }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '1rem' }}>
-                  <h4 style={{ color: section.key === 'lunch' || section.key === 'dinner' ? 'var(--energy-orange)' : 'var(--fitness-green)' }}>
-                    {section.label}
-                  </h4>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      type="button"
-                      className="btn"
-                      onClick={() => setMealStatus(section.key, false)}
-                      style={{
-                        padding: '0.4rem 0.85rem',
-                        background: eatenMeals[dayKey]?.[section.key] ? '#e2e8f0' : 'linear-gradient(135deg, #0f172a, #1f2937)',
-                        color: eatenMeals[dayKey]?.[section.key] ? '#0f172a' : 'white'
-                      }}
-                    >
-                      Not Eaten
-                    </button>
-                    <button
-                      type="button"
-                      className="btn"
-                      onClick={() => setMealStatus(section.key, true)}
-                      style={{
-                        padding: '0.4rem 0.85rem',
-                        background: eatenMeals[dayKey]?.[section.key]
-                          ? 'linear-gradient(135deg, #16a34a, #22c55e)'
-                          : '#e2e8f0',
-                        color: eatenMeals[dayKey]?.[section.key] ? 'white' : '#0f172a'
-                      }}
-                    >
-                      Eaten
-                    </button>
+            ].map(section => {
+              const isEaten = eatenMeals[dayKey]?.[section.key];
+              const meal = activeDayData.meals[section.key];
+              const quantityText = meal?.quantity || quantityByName[meal?.name] || null;
+              const mealToneClass = section.key === 'lunch' || section.key === 'dinner'
+                ? 'meal-card--orange'
+                : 'meal-card--green';
+              return (
+                <div key={section.key} className={`meal-card ${mealToneClass}`}>
+                  <div className="meal-header">
+                    <h4 className={section.key === 'lunch' || section.key === 'dinner' ? 'text-accent--orange' : 'text-accent--green'}>
+                      {section.label}
+                    </h4>
+                    <div className="meal-actions">
+                      <button
+                        type="button"
+                        className={`meal-status-btn ${isEaten ? 'is-muted' : 'is-inactive'}`}
+                        onClick={() => setMealStatus(section.key, false)}
+                      >
+                        Not Eaten
+                      </button>
+                      <button
+                        type="button"
+                        className={`meal-status-btn ${isEaten ? 'is-active' : 'is-muted'}`}
+                        onClick={() => setMealStatus(section.key, true)}
+                      >
+                        Eaten
+                      </button>
+                    </div>
+                  </div>
+                  <p className="meal-title">{meal.name}</p>
+                  <div className="meal-chip-row">
+                    {quantityText ? (
+                      <span className="meal-chip">
+                        {quantityText}
+                      </span>
+                    ) : null}
+                    <span className="meal-chip">
+                      {meal.calories} cal
+                    </span>
+                    <span className="meal-chip">
+                      {meal.protein}g protein{meal.quantityGrams ? ` | ${meal.quantityGrams}g qty` : ''}
+                    </span>
+                    <span className="meal-chip">
+                      {meal.carbs}g carbs
+                    </span>
+                    <span className="meal-chip">
+                      {meal.fat}g fat
+                    </span>
                   </div>
                 </div>
-                <p style={{ fontWeight: '600' }}>{activeDayData.meals[section.key].name}</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', backgroundColor: 'white', padding: '0.2rem 0.5rem', borderRadius: '999px' }}>
-                    {activeDayData.meals[section.key].calories} cal
-                  </span>
-                  <span style={{ fontSize: '0.75rem', backgroundColor: 'white', padding: '0.2rem 0.5rem', borderRadius: '999px' }}>
-                    {activeDayData.meals[section.key].protein}g protein
-                  </span>
-                  <span style={{ fontSize: '0.75rem', backgroundColor: 'white', padding: '0.2rem 0.5rem', borderRadius: '999px' }}>
-                    {activeDayData.meals[section.key].carbs}g carbs
-                  </span>
-                  <span style={{ fontSize: '0.75rem', backgroundColor: 'white', padding: '0.2rem 0.5rem', borderRadius: '999px' }}>
-                    {activeDayData.meals[section.key].fat}g fat
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          <div style={{
-            marginTop: '1.5rem',
-            padding: '1rem',
-            borderRadius: '0.75rem',
-            background: 'linear-gradient(135deg, #0f172a, #1f2937)',
-            color: 'white',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '1rem'
-          }}>
+          <div className="diet-summary">
             <div>
-              <p style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#cbd5f5' }}>
+              <p className="diet-summary-label">
                 Calories Gained
               </p>
-              <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>{dayTotals.calories} cal</p>
+              <p className="diet-summary-value">{dayTotals.calories} cal</p>
             </div>
             <div>
-              <p style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#cbd5f5' }}>
+              <p className="diet-summary-label">
                 Protein Gained
               </p>
-              <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>{dayTotals.protein} g</p>
+              <p className="diet-summary-value">{dayTotals.protein} g</p>
             </div>
             <div>
-              <p style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#cbd5f5' }}>
+              <p className="diet-summary-label">
                 Remaining Calories
               </p>
-              <p style={{ fontSize: '1.4rem', fontWeight: '700' }}>
+              <p className="diet-summary-value">
                 {Math.max(0, activeDayData.targetCalories - dayTotals.calories)} cal
               </p>
             </div>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#cbd5f5' }}>
+            <div className="diet-summary-status">
+              <p className="diet-summary-label">
                 Status
               </p>
-              <p style={{ fontSize: '1.1rem', fontWeight: '600' }}>{saveStatus || 'Ready'}</p>
+              <p className="diet-summary-status__value">{saveStatus || 'Ready'}</p>
             </div>
           </div>
         </div>
 
-        <div className="card" style={{ marginTop: '2rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>💡 Nutrition Tips for Week {week}</h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
-            gap: '1rem'
-          }}>
-            <div style={{ padding: '1rem', backgroundColor: '#0f172a', borderRadius: '0.75rem', color: 'white' }}>
+        <div className="card card--spaced">
+          <h3 className="section-title">💡 Nutrition Tips for Week {week}</h3>
+          <div className="diet-tips-grid">
+            <div className="diet-tip-card">
               <h4>💧 Hydration</h4>
-              <p style={{ fontSize: '0.875rem', color: '#cbd5f5' }}>
+              <p>
                 Drink at least 8-10 glasses of water daily
               </p>
             </div>
-            <div style={{ padding: '1rem', backgroundColor: '#fff7ed', borderRadius: '0.75rem' }}>
+            <div className="diet-tip-card">
               <h4>⏰ Meal Timing</h4>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+              <p>
                 Eat every 3-4 hours to maintain energy levels
               </p>
             </div>
-            <div style={{ padding: '1rem', backgroundColor: '#f0fdf4', borderRadius: '0.75rem' }}>
+            <div className="diet-tip-card">
               <h4>🥗 Portion Control</h4>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+              <p>
                 Use smaller plates and eat slowly
               </p>
             </div>
-            <div style={{ padding: '1rem', backgroundColor: '#fff7ed', borderRadius: '0.75rem' }}>
+            <div className="diet-tip-card">
               <h4>🍽️ Meal Prep</h4>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+              <p>
                 Prepare meals in advance for consistency
               </p>
             </div>

@@ -12,7 +12,11 @@ const Profile = () => {
 
   // Safety check: Don't render if data is missing
   if (!user || !fitnessData) {
-    return <div style={{padding: '2rem', textAlign: 'center'}}>Loading Profile...</div>;
+    return (
+      <div className="page-loader">
+        <p className="page-loader__text">Loading Profile...</p>
+      </div>
+    );
   }
 
   useEffect(() => {
@@ -108,6 +112,16 @@ const Profile = () => {
   const goalDelta = startWeight - targetWeight;
   const progressDelta = startWeight - currentWeight;
   const goalPercent = goalDelta > 0 ? Math.min(100, Math.max(0, (progressDelta / goalDelta) * 100)) : 0;
+  const bmiTone = (fitnessData.bmiCategory?.category || '').toLowerCase();
+  const bmiToneClass = bmiTone.includes('under')
+    ? 'bmi-tone--under'
+    : bmiTone.includes('normal')
+      ? 'bmi-tone--normal'
+      : bmiTone.includes('overweight')
+        ? 'bmi-tone--over'
+        : bmiTone.includes('obese')
+          ? 'bmi-tone--obese'
+          : 'bmi-tone--neutral';
 
   return (
     <div className="page page--light profile-page">
@@ -115,31 +129,27 @@ const Profile = () => {
         <div className="container page-hero__content">
           <div className="page-hero__title">
             <div>
-              <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+              <h1 className="page-hero__headline">
                 Profile Settings
               </h1>
-              <p style={{ opacity: 0.9 }}>
+              <p className="page-hero__lede">
                 Manage your fitness profile and preferences
               </p>
             </div>
-            <Link to="/dashboard" className="btn" style={{ 
-              backgroundColor: 'rgba(255,255,255,0.2)', 
-              color: 'white',
-              textDecoration: 'none'
-            }}>
+            <Link to="/dashboard" className="btn btn-ghost btn-link">
               ← Dashboard
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="container" style={{ padding: '2rem 0' }}>
+      <div className="container section-spacing">
         <div className="profile-content">
           
           {/* Basic Information */}
-          <div className="card profile-card" style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3>Basic Information</h3>
+          <div className="card profile-card card--spaced">
+            <div className="profile-header">
+              <h3 className="section-title">Basic Information</h3>
               {!isEditing ? (
                 <button 
                   onClick={() => setIsEditing(true)}
@@ -148,7 +158,7 @@ const Profile = () => {
                   Edit Profile
                 </button>
               ) : (
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className="profile-header__actions">
                   <button 
                     onClick={handleSave}
                     className="btn btn-primary"
@@ -160,8 +170,7 @@ const Profile = () => {
                       setIsEditing(false);
                       setEditData(user);
                     }}
-                    className="btn"
-                    style={{ backgroundColor: 'var(--text-gray)', color: 'white' }}
+                    className="btn btn-muted"
                   >
                     Cancel
                   </button>
@@ -169,11 +178,7 @@ const Profile = () => {
               )}
             </div>
 
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-              gap: '1rem'
-            }}>
+            <div className="profile-grid">
               <div className="form-group">
                 <label className="form-label">Name</label>
                 {isEditing ? (
@@ -184,7 +189,7 @@ const Profile = () => {
                     onChange={(e) => handleInputChange('name', e.target.value)}
                   />
                 ) : (
-                  <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+                  <p className="profile-field">
                     {user.name || 'Not set'}
                   </p>
                 )}
@@ -200,7 +205,7 @@ const Profile = () => {
                     onChange={(e) => handleInputChange('age', e.target.value)}
                   />
                 ) : (
-                  <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+                  <p className="profile-field">
                     {user.age} years
                   </p>
                 )}
@@ -221,7 +226,7 @@ const Profile = () => {
                     ))}
                   </div>
                 ) : (
-                  <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+                  <p className="profile-field">
                     {user.sex ? (user.sex.charAt(0).toUpperCase() + user.sex.slice(1)) : ''}
                   </p>
                 )}
@@ -237,7 +242,7 @@ const Profile = () => {
                     onChange={(e) => handleInputChange('height', e.target.value)}
                   />
                 ) : (
-                  <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+                  <p className="profile-field">
                     {user.height} cm
                   </p>
                 )}
@@ -254,15 +259,11 @@ const Profile = () => {
                   />
                 ) : (
                   <div>
-                    <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem', marginBottom: '0.5rem' }}>
+                    <p className="profile-field profile-field--spaced">
                       {user.weight} kg
                     </p>
                     {fitnessData.bmi && (
-                      <p style={{ 
-                        fontSize: '0.875rem', 
-                        color: fitnessData.bmiCategory?.color || 'black',
-                        fontWeight: '600'
-                      }}>
+                      <p className={`profile-bmi ${bmiToneClass}`}>
                         BMI: {fitnessData.bmi} ({fitnessData.bmiCategory?.category || ''})
                       </p>
                     )}
@@ -280,7 +281,7 @@ const Profile = () => {
                     onChange={(e) => handleInputChange('targetWeight', e.target.value)}
                   />
                 ) : (
-                  <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+                  <p className="profile-field">
                     {user.targetWeight ? `${user.targetWeight} kg` : 'Not set'}
                   </p>
                 )}
@@ -289,8 +290,8 @@ const Profile = () => {
           </div>
 
           {/* Fitness Goals */}
-          <div className="card profile-card" style={{ marginBottom: '2rem' }}>
-            <h3 style={{ marginBottom: '1.5rem' }}>Fitness Goals</h3>
+          <div className="card profile-card card--spaced">
+            <h3 className="section-title">Fitness Goals</h3>
             
             <div className="form-group">
               <label className="form-label">Current Goal</label>
@@ -307,13 +308,13 @@ const Profile = () => {
                   ))}
                 </div>
               ) : (
-                <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+                <p className="profile-field">
                   {user.fitnessGoal ? user.fitnessGoal.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : ''}
                 </p>
               )}
             </div>
 
-            <div className="form-group" style={{marginTop: '1rem'}}>
+            <div className="form-group profile-form-group--spaced">
               <label className="form-label">Fitness Level</label>
               {isEditing ? (
                 <div className="checkbox-group">
@@ -328,7 +329,7 @@ const Profile = () => {
                   ))}
                 </div>
               ) : (
-                <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+                <p className="profile-field">
                   {user.fitnessLevel ? (user.fitnessLevel.charAt(0).toUpperCase() + user.fitnessLevel.slice(1)) : ''}
                 </p>
               )}
@@ -336,8 +337,8 @@ const Profile = () => {
           </div>
 
           {/* Health & Diet */}
-          <div className="card profile-card" style={{ marginBottom: '2rem' }}>
-            <h3 style={{ marginBottom: '1.5rem' }}>Health & Dietary Preferences</h3>
+          <div className="card profile-card card--spaced">
+            <h3 className="section-title">Health & Dietary Preferences</h3>
             
             <div className="form-group">
               <label className="form-label">Health Problems</label>
@@ -354,7 +355,7 @@ const Profile = () => {
                   ))}
                 </div>
               ) : (
-                <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+                <p className="profile-field">
                   {user.healthProblems && user.healthProblems.length > 0 ? user.healthProblems.join(', ') : 'None'}
                 </p>
               )}
@@ -375,7 +376,7 @@ const Profile = () => {
                   ))}
                 </div>
               ) : (
-                <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+                <p className="profile-field">
                   {user.bloodPressure ? user.bloodPressure.charAt(0).toUpperCase() + user.bloodPressure.slice(1) : 'Not set'}
                 </p>
               )}
@@ -396,7 +397,7 @@ const Profile = () => {
                   ))}
                 </div>
               ) : (
-                <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+                <p className="profile-field">
                   {user.hasDiabetes ? 'Yes' : 'No'}
                 </p>
               )}
@@ -417,16 +418,16 @@ const Profile = () => {
                   ))}
                 </div>
               ) : (
-                <p style={{ padding: '0.75rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem' }}>
+                <p className="profile-field">
                   {user.preferredCuisines && user.preferredCuisines.length > 0 ? user.preferredCuisines.join(', ') : 'None'}
                 </p>
               )}
             </div>
           </div>
 
-          <div className="card profile-card" style={{ marginBottom: '2rem' }}>
-            <h3 style={{ marginBottom: '1.5rem' }}>Progress Photos</h3>
-            <p style={{ color: 'var(--text-gray)', marginBottom: '1.5rem' }}>
+          <div className="card profile-card card--spaced">
+            <h3 className="section-title">Progress Photos</h3>
+            <p className="profile-section-subtitle">
               Uploads save instantly and appear across your dashboard.
             </p>
             <div className="photo-grid">
@@ -471,30 +472,27 @@ const Profile = () => {
             </div>
           </div>
 
-          <div className="card profile-card" style={{ marginBottom: '2rem' }}>
-            <h3 style={{ marginBottom: '1.5rem' }}>Goal Tracking</h3>
-            <div style={{ marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between' }}>
+          <div className="card profile-card card--spaced">
+            <h3 className="section-title">Goal Tracking</h3>
+            <div className="profile-progress__header">
               <span>{startWeight} kg → {targetWeight} kg</span>
               <span>{goalPercent.toFixed(0)}%</span>
             </div>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${goalPercent}%` }}></div>
-            </div>
-            <p style={{ marginTop: '0.75rem', color: 'var(--text-gray)' }}>
+            <progress className="progress-bar" max="100" value={goalPercent} />
+            <p className="profile-progress__note">
               Remaining: {Math.max(0, currentWeight - targetWeight)} kg
             </p>
           </div>
 
           {/* Logout Zone */}
-          <div className="card profile-card profile-card--danger" style={{ border: '2px solid #ef4444' }}>
-            <h3 style={{ color: '#ef4444', marginBottom: '1rem' }}>Logout</h3>
-            <p style={{ marginBottom: '1rem', color: 'var(--text-gray)' }}>
+          <div className="card profile-card profile-card--danger card--spaced">
+            <h3 className="profile-danger__title">Logout</h3>
+            <p className="profile-danger__text">
               Sign out of your account on this device.
             </p>
             <button 
               onClick={handleReset}
-              className="btn"
-              style={{ backgroundColor: '#ef4444', color: 'white' }}
+              className="btn profile-danger__btn"
             >
               Logout
             </button>

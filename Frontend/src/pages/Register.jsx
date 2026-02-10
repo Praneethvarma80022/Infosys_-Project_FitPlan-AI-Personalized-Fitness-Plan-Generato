@@ -297,9 +297,9 @@ const Register = () => {
                     )}
                   </div>
 
-                  <div className="card" style={{ backgroundColor: '#f8fafc', borderColor: '#e2e8f0' }}>
-                    <p style={{ fontWeight: 600, marginBottom: '0.35rem' }}>Data Privacy</p>
-                    <p style={{ color: 'var(--text-gray)', fontSize: '0.85rem' }}>
+                  <div className="card register-note-card">
+                    <p className="register-note-title">Data Privacy</p>
+                    <p className="register-note">
                       All personal and health information is encrypted and used only to personalize the fitness plan.
                     </p>
                   </div>
@@ -446,9 +446,9 @@ const Register = () => {
 
                   <div className="form-group">
                     <label className="form-label">Body Mass Index (BMI)</label>
-                    <div className="card" style={{ backgroundColor: '#f8fafc', borderColor: '#e2e8f0' }}>
+                    <div className="card register-note-card">
                       <strong style={{ fontSize: '1.1rem' }}>{bmiValue}</strong>
-                      <div style={{ color: 'var(--text-gray)', marginTop: '0.35rem', fontSize: '0.85rem' }}>
+                      <div className="register-note register-note--spaced">
                         Calculated from height and weight
                       </div>
                     </div>

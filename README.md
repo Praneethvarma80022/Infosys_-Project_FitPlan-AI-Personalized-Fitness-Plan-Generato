@@ -1,157 +1,179 @@
 # FitPlan AI
 
-A rule-based fitness and diet planner with an AI-like user experience. Get personalized 10-week fitness and nutrition plans without any signup required.
+FitPlan AI is a rule-based fitness and diet planner that delivers an AI-like personalized experience. It generates 10-week workout and nutrition plans, tracks daily completion, and supports cuisine and health modifiers. The project includes a React frontend and a Node.js/Express backend with a MySQL database.
 
-## ✨ Features
+## Problem Statement
 
-- **Personalized Plans**: Customized 10-week fitness and diet plans based on your goals, fitness level, and health conditions
-- **Progressive Training**: Smart progression system that adapts workout intensity week by week
-- **Smart Nutrition**: Meal plans tailored to your dietary preferences, restrictions, and fitness goals
-- **No Signup Required**: Start your fitness journey instantly with rule-based AI
-- **Responsive Design**: Works seamlessly on desktop and mobile devices
+Many users struggle to build consistent fitness and nutrition routines because existing tools are either too complex, expensive, or require long onboarding. The goal is to deliver a simple system that generates personalized plans, tracks progress, and adapts to user preferences without heavy friction.
 
-## 🎯 Fitness Goals Supported
+## Project Abstract
 
-- Weight Loss
-- Muscle Gain
-- Fat Loss + Toning
-- General Fitness
-- Endurance Improvement
+FitPlan AI provides a rule-based personalization engine that converts user inputs into structured 10-week workout and diet plans. The system combines a React-based UI, an Express API, and a MySQL database for persistence. Users can register, receive personalized plans, log daily activity and meals, and visualize progress using charts.
 
-## 🏃‍♂️ Workout Types
+## Objectives
 
-- Cardio workouts
-- HIIT (High-Intensity Interval Training)
-- Strength training
-- Compound movements
-- Isolation exercises
-- Flexibility and mobility
+- Generate personalized fitness and diet plans with weekly progression.
+- Support dietary preferences, restrictions, and health conditions.
+- Track workouts and meals with daily completion logs.
+- Provide progress visualization for motivation and feedback.
 
-## 🍽️ Nutrition Features
+## Features
 
-- Calorie calculations based on your goals
-- Multiple cuisine preferences
-- Dietary restrictions support
-- Weekly meal planning
-- Macro-balanced nutrition
+- Personalized 10-week workout and diet plans
+- Progressive training intensity by week
+- Diet plans tailored to goals, cuisines, and restrictions
+- Daily workout and meal completion tracking
+- Progress dashboards with charting
+- Responsive UI with light/dark theme support
 
-## 🚀 Getting Started
+## Tech Stack
 
-### Prerequisites
+- Frontend: React 18, Vite, React Router, Chart.js
+- Backend: Node.js, Express, MySQL2, JWT
+- Styling: CSS with custom properties
 
-- Node.js (version 16 or higher)
-- npm or yarn package manager
+## Tools Used
 
-### Installation
+- Visual Studio Code
+- Node.js and npm
+- Vite dev server
+- MySQL
+- Git
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd "Fitness Plan AI"
+## Skills Used
+
+- React component design and state management
+- REST API design with Express
+- Database schema design and SQL
+- Authentication and secure storage (JWT)
+- Data modeling for workouts and diets
+- UI theming and responsive styling
+
+## Monorepo Structure
+
+```
+Fitness-Plan-AI/
+├── Backend/                 # Node/Express API and DB integration
+│   ├── db.js                # MySQL connection pool
+│   ├── schema.sql           # DB schema
+│   ├── server.js            # Express app
+│   └── routes/              # API routes
+├── Frontend/                # React client
+│   ├── src/
+│   │   ├── components/      # Reusable UI components
+│   │   ├── context/         # React context and state
+│   │   ├── data/            # Rules and diet/workout data
+│   │   ├── pages/           # App pages
+│   │   ├── App.jsx          # App shell and routes
+│   │   └── main.jsx         # Entry point
+│   ├── index.html
+│   └── package.json
+├── exercises/               # Exercise metadata JSON files
+└── README.md
 ```
 
-2. Install dependencies:
+## Prerequisites
+
+- Node.js 16+ and npm
+- MySQL 8+ (local or remote)
+
+## Setup
+
+### 1) Backend
+
+1. Create a database and tables using [Backend/schema.sql](Backend/schema.sql).
+2. In Backend, install dependencies:
+
 ```bash
+cd Backend
 npm install
 ```
 
-3. Start the development server:
+3. Create a `.env` file in Backend:
+
+```
+DB_HOST=127.0.0.1
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=fitness_db
+PORT=5000
+JWT_SECRET=your_secret
+```
+
+4. Start the API server:
+
+```bash
+npm start
+```
+
+### 2) Frontend
+
+1. In Frontend, install dependencies:
+
+```bash
+cd Frontend
+npm install
+```
+
+2. Start the Vite dev server:
+
 ```bash
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+3. Open `http://localhost:5173` in your browser.
 
-### Build for Production
+## Usage Notes
 
-```bash
-npm run build
+- The API listens on `http://localhost:5000` by default.
+- The frontend expects the backend to be running for auth, logs, and exercise lookups.
+- Exercise details are served from the [exercises](exercises/) directory.
+
+## Key Data Files
+
+- Diet templates: [Frontend/src/data/diets.json](Frontend/src/data/diets.json)
+- Workout templates: [Frontend/src/data/workouts.json](Frontend/src/data/workouts.json)
+- Rule engine: [Frontend/src/data/rules.json](Frontend/src/data/rules.json)
+
+## Scripts
+
+Backend (from Backend/):
+
+- `npm start` - Run the API server with nodemon
+
+Frontend (from Frontend/):
+
+- `npm run dev` - Start the dev server
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+
+## License
+
+ISC
+
+## System Architecture
+
+```mermaid
+graph TD
+	A[User] -->|Browser| B[React Frontend]
+	B -->|REST API| C[Express Backend]
+	C --> D[(MySQL Database)]
+	C --> E[Exercises JSON Data]
+	B --> F[Charts and Progress UI]
 ```
 
-### Preview Production Build
+## Application Flow
 
-```bash
-npm run preview
+```mermaid
+flowchart TD
+	S[Start] --> R[User Registers or Logs In]
+	R --> I[Collect User Profile]
+	I --> P[Generate Workout and Diet Plans]
+	P --> D[Display Dashboard]
+	D --> W[Log Workout Completion]
+	D --> M[Log Meal Completion]
+	W --> U[Update Progress]
+	M --> U
+	U --> C[Show Charts and Insights]
+	C --> D
 ```
-
-## 🏗️ Project Structure
-
-```
-Fitness Plan AI/
-├── src/
-│   ├── components/          # Reusable UI components
-│   ├── context/            # React context providers
-│   │   └── UserContext.jsx # User state management
-│   ├── data/               # Static data and rules
-│   │   ├── diets.json      # Diet and meal data
-│   │   ├── rules.json      # Fitness and nutrition rules
-│   │   └── workouts.json   # Exercise database
-│   ├── pages/              # Application pages
-│   │   ├── Dashboard.jsx   # Main dashboard
-│   │   ├── DietWeek.jsx    # Weekly diet plans
-│   │   ├── Landing.jsx     # Landing page
-│   │   ├── PlanOverview.jsx # Plan summary
-│   │   ├── Profile.jsx     # User profile
-│   │   ├── Progress.jsx    # Progress tracking
-│   │   ├── Register.jsx    # User registration
-│   │   └── WorkoutDay.jsx  # Daily workout details
-│   ├── App.jsx             # Main application component
-│   ├── index.css           # Global styles
-│   └── main.jsx            # Application entry point
-├── index.html              # HTML template
-├── package.json            # Project dependencies
-└── vite.config.js          # Vite configuration
-```
-
-## 🛠️ Technology Stack
-
-- **Frontend**: React 18 with Vite
-- **Routing**: React Router DOM
-- **Styling**: CSS with custom properties
-- **Build Tool**: Vite
-- **Package Manager**: npm
-
-## 📱 Pages Overview
-
-- **Landing**: Welcome page with feature highlights
-- **Register**: Multi-step user onboarding form
-- **Dashboard**: Main hub with quick access to plans and progress
-- **Plan Overview**: Complete 10-week plan summary
-- **Workout Day**: Detailed daily workout instructions
-- **Diet Week**: Weekly meal plans and nutrition info
-- **Progress**: Track your fitness journey
-- **Profile**: Manage your personal information
-
-## 🎨 Design System
-
-The app uses a modern design system with:
-- Fitness green (`--fitness-green`) and energy orange (`--energy-orange`) color scheme
-- Responsive grid layouts
-- Card-based UI components
-- Gradient backgrounds
-- Clean typography
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the ISC License.
-
-## 🔮 Future Enhancements
-
-- Exercise video demonstrations
-- Progress photos and measurements
-- Social sharing features
-- Workout reminders and notifications
-- Integration with fitness trackers
-- Advanced analytics and insights
-
----
-
-**Start your fitness journey today with FitPlan AI!** 🏋️‍♀️💪

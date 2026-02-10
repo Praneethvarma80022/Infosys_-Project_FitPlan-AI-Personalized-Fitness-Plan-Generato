@@ -17,7 +17,11 @@ const WorkoutDay = () => {
   });
 
   if (!fitnessData) {
-    return <div>Loading...</div>;
+    return (
+      <div className="page-loader">
+        <p className="page-loader__text">Loading...</p>
+      </div>
+    );
   }
 
   const workoutData = fitnessData.workoutPlan[`week${week}`][`day${day}`];
@@ -113,7 +117,7 @@ const WorkoutDay = () => {
   const renderExerciseDetails = (detail) => {
     if (detail === undefined) {
       return (
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-gray)', marginTop: '0.5rem' }}>
+        <p className="exercise-details__meta">
           Loading details...
         </p>
       );
@@ -121,41 +125,36 @@ const WorkoutDay = () => {
 
     if (!detail) {
       return (
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-gray)', marginTop: '0.5rem' }}>
+        <p className="exercise-details__meta">
           No dataset details available.
         </p>
       );
     }
 
     return (
-      <div style={{ marginTop: '0.75rem', display: 'grid', gap: '0.6rem' }}>
+      <div className="exercise-details">
         {detail.imageUrls && detail.imageUrls[0] && (
           <img
             src={detail.imageUrls[0]}
             alt={`${detail.name} demonstration`}
-            style={{
-              width: '100%',
-              borderRadius: '0.6rem',
-              border: '1px solid rgba(15, 23, 42, 0.08)',
-              objectFit: 'cover'
-            }}
+            className="exercise-details__image"
           />
         )}
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-gray)' }}>
-          <strong style={{ color: 'var(--text-dark)' }}>Equipment:</strong> {detail.equipment || 'N/A'}
+        <div className="exercise-details__meta">
+          <strong className="exercise-details__label">Equipment:</strong> {detail.equipment || 'N/A'}
         </div>
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-gray)' }}>
-          <strong style={{ color: 'var(--text-dark)' }}>Level:</strong> {detail.level || 'N/A'}
+        <div className="exercise-details__meta">
+          <strong className="exercise-details__label">Level:</strong> {detail.level || 'N/A'}
         </div>
-        <div style={{ fontSize: '0.85rem', color: 'var(--text-gray)' }}>
-          <strong style={{ color: 'var(--text-dark)' }}>Primary:</strong> {detail.primaryMuscles?.join(', ') || 'N/A'}
+        <div className="exercise-details__meta">
+          <strong className="exercise-details__label">Primary:</strong> {detail.primaryMuscles?.join(', ') || 'N/A'}
         </div>
         {detail.instructions && detail.instructions.length > 0 && (
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-gray)' }}>
-            <strong style={{ color: 'var(--text-dark)' }}>How to:</strong>
-            <ol style={{ margin: '0.35rem 0 0 1.1rem', padding: 0 }}>
+          <div className="exercise-details__meta">
+            <strong className="exercise-details__label">How to:</strong>
+            <ol className="exercise-details__list">
               {detail.instructions.map((step, idx) => (
-                <li key={idx} style={{ marginBottom: '0.25rem' }}>{step}</li>
+                <li key={idx} className="exercise-details__list-item">{step}</li>
               ))}
             </ol>
           </div>
@@ -208,61 +207,53 @@ const WorkoutDay = () => {
   };
 
   return (
-    <div className="workout-shell" style={{ minHeight: '100vh' }}>
-      <header className="workout-hero" style={{ 
-        background: 'linear-gradient(135deg, #0f172a, #1f2937 45%, #16a34a 100%)',
-        color: 'white',
-        padding: '2.5rem 0'
-      }}>
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div className="workout-shell workout-page">
+      <header className="workout-hero workout-hero--dark">
+        <div className="container workout-hero__content">
+          <div className="workout-hero__meta">
             <div>
-              <p style={{ textTransform: 'uppercase', letterSpacing: '0.2em', fontSize: '0.75rem', opacity: 0.7 }}>
+              <p className="page-hero__kicker">
                 Workout Session
               </p>
-              <h1 style={{ fontSize: '2.25rem', marginBottom: '0.5rem' }}>
+              <h1 className="page-hero__headline">
                 Week {week} - {dayName}
               </h1>
-              <p style={{ opacity: 0.9 }}>
+              <p className="workout-hero__subtitle">
                 {workoutData.title} • {workoutData.phase}
               </p>
             </div>
-            <Link to="/dashboard" className="btn" style={{ 
-              backgroundColor: 'rgba(255,255,255,0.2)', 
-              color: 'white',
-              textDecoration: 'none'
-            }}>
+            <Link to="/dashboard" className="btn btn-ghost btn-link">
               ← Dashboard
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="container" style={{ padding: '2rem 0' }}>
+      <div className="container section-spacing">
         {workoutData.type === 'rest' ? (
           <div className="card rest-day-card">
-            <h2 style={{ color: 'var(--fitness-green)', marginBottom: '1rem' }}>
+            <h2 className="rest-day-title">
               🛌 Rest Day
             </h2>
-            <p style={{ fontSize: '1.25rem', marginBottom: '2rem', color: 'var(--text-gray)' }}>
+            <p className="rest-day-text">
               Recovery is just as important as training. Take time to rest and recharge.
             </p>
             <div className="rest-day-grid">
               <div className="rest-day-tip">
                 <h4>💧 Stay Hydrated</h4>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+                <p className="rest-day-tip__text">
                   Drink plenty of water throughout the day
                 </p>
               </div>
               <div className="rest-day-tip rest-day-tip--warm">
                 <h4>🧘 Light Stretching</h4>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+                <p className="rest-day-tip__text">
                   Gentle stretches to maintain flexibility
                 </p>
               </div>
               <div className="rest-day-tip">
                 <h4>😴 Quality Sleep</h4>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+                <p className="rest-day-tip__text">
                   Aim for 7-9 hours of restful sleep
                 </p>
               </div>
@@ -270,25 +261,23 @@ const WorkoutDay = () => {
           </div>
         ) : (
           <div>
-            <div className="card workout-snapshot workout-snapshot-card" style={{
-              marginBottom: '2rem'
-            }}>
-              <h3 style={{ marginBottom: '1rem' }}>Session Snapshot</h3>
+            <div className="card workout-snapshot workout-snapshot-card card--spaced">
+              <h3 className="section-title">Session Snapshot</h3>
               <div className="workout-metrics-grid">
                 {[
-                  { label: 'Type', value: workoutData.type.charAt(0).toUpperCase() + workoutData.type.slice(1), color: '#16a34a', icon: Activity },
-                  { label: 'Duration', value: '60 min', color: '#f97316', icon: Timer },
-                  { label: 'Intensity', value: `${Math.round(workoutData.intensity * 100)}%`, color: '#0f172a', icon: Flame },
-                  { label: 'Phase', value: workoutData.phase, color: '#f97316', icon: CheckCircle2 }
+                  { label: 'Type', value: workoutData.type.charAt(0).toUpperCase() + workoutData.type.slice(1), tone: 'green', icon: Activity },
+                  { label: 'Duration', value: '60 min', tone: 'orange', icon: Timer },
+                  { label: 'Intensity', value: `${Math.round(workoutData.intensity * 100)}%`, tone: 'neutral', icon: Flame },
+                  { label: 'Phase', value: workoutData.phase, tone: 'orange', icon: CheckCircle2 }
                 ].map(item => (
-                  <div key={item.label} className="workout-metric">
-                    <p style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.15em', color: 'var(--text-gray)' }}>
+                  <div key={item.label} className={`workout-metric workout-metric--${item.tone}`}>
+                    <p className="workout-metric__label">
                       {item.label}
                     </p>
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
-                      <item.icon size={18} color={item.color} />
+                    <div className="workout-metric__icon">
+                      <item.icon size={18} />
                     </div>
-                    <p style={{ fontSize: '1.25rem', fontWeight: '700', color: item.color }}>
+                    <p className="workout-metric__value">
                       {item.value}
                     </p>
                   </div>
@@ -296,26 +285,26 @@ const WorkoutDay = () => {
               </div>
             </div>
 
-            <div className="card workout-section workout-section--warmup" style={{ marginBottom: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ color: 'var(--energy-orange)' }}>🔥 Warm-up</h3>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-gray)' }}>10 minutes</span>
+            <div className="card workout-section workout-section--warmup card--spaced">
+              <div className="workout-section__header">
+                <h3 className="workout-section__title text-accent--orange">🔥 Warm-up</h3>
+                <span className="workout-section__time">10 minutes</span>
               </div>
               <div className="workout-exercises-grid">
                 {workoutData.template.warmup.map((exercise, index) => (
                   <div key={index} className="workout-exercise workout-exercise--warmup">
                     <h4>{exercise.exercise}</h4>
-                    <p style={{ color: 'var(--text-gray)' }}>{exercise.duration}</p>
+                    <p className="exercise-duration">{exercise.duration}</p>
                     {renderExerciseDetails(exerciseDetails[exercise.exercise])}
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="card workout-section workout-section--main" style={{ marginBottom: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ color: 'var(--fitness-green)' }}>💪 Main Workout</h3>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-gray)' }}>40 minutes</span>
+            <div className="card workout-section workout-section--main card--spaced">
+              <div className="workout-section__header">
+                <h3 className="workout-section__title text-accent--green">💪 Main Workout</h3>
+                <span className="workout-section__time">40 minutes</span>
               </div>
               <div className="workout-exercises-grid workout-exercises-grid--main">
                 {workoutData.template.main.map((exercise, index) => (
@@ -323,46 +312,32 @@ const WorkoutDay = () => {
                     key={index}
                     className={`workout-exercise workout-exercise--main ${exerciseStatus[`${week}-${day}-main-${index}`] ? 'is-done' : ''}`}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <h4 style={{ fontSize: '1.05rem' }}>{exercise.exercise}</h4>
-                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <div className="workout-exercise__header">
+                      <h4 className="workout-exercise__title">{exercise.exercise}</h4>
+                      <div className="workout-exercise__actions">
                         <button
                           type="button"
-                          className="btn workout-pill"
+                          className={`btn workout-pill workout-status-btn ${exerciseStatus[`${week}-${day}-main-${index}`] ? 'is-muted' : 'is-inactive'}`}
                           onClick={() => setExerciseStatus(prev => ({
                             ...prev,
                             [`${week}-${day}-main-${index}`]: false
                           }))}
-                          style={{
-                            padding: '0.35rem 0.75rem',
-                            background: exerciseStatus[`${week}-${day}-main-${index}`]
-                              ? '#e2e8f0'
-                              : 'linear-gradient(135deg, #0f172a, #1f2937)',
-                            color: exerciseStatus[`${week}-${day}-main-${index}`] ? '#0f172a' : 'white'
-                          }}
                         >
                           Not Done
                         </button>
                         <button
                           type="button"
-                          className="btn workout-pill"
+                          className={`btn workout-pill workout-status-btn ${exerciseStatus[`${week}-${day}-main-${index}`] ? 'is-active' : 'is-muted'}`}
                           onClick={() => setExerciseStatus(prev => ({
                             ...prev,
                             [`${week}-${day}-main-${index}`]: true
                           }))}
-                          style={{
-                            padding: '0.35rem 0.75rem',
-                            background: exerciseStatus[`${week}-${day}-main-${index}`]
-                              ? 'linear-gradient(135deg, #16a34a, #22c55e)'
-                              : '#e2e8f0',
-                            color: exerciseStatus[`${week}-${day}-main-${index}`] ? 'white' : '#0f172a'
-                          }}
                         >
                           Done
                         </button>
                       </div>
                     </div>
-                    <div style={{ marginTop: '0.5rem' }}>
+                    <div className="workout-exercise__meta">
                       {exercise.sets && (
                         <p><strong>Sets:</strong> {exercise.sets}</p>
                       )}
@@ -391,16 +366,16 @@ const WorkoutDay = () => {
               </div>
             </div>
 
-            <div className="card workout-section workout-section--cooldown" style={{ marginBottom: '2rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ color: '#0f172a' }}>🧘 Cool-down</h3>
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-gray)' }}>10 minutes</span>
+            <div className="card workout-section workout-section--cooldown card--spaced">
+              <div className="workout-section__header">
+                <h3 className="workout-section__title">🧘 Cool-down</h3>
+                <span className="workout-section__time">10 minutes</span>
               </div>
               <div className="workout-exercises-grid">
                 {workoutData.template.cooldown.map((exercise, index) => (
                   <div key={index} className="workout-exercise workout-exercise--cooldown">
                     <h4>{exercise.exercise}</h4>
-                    <p style={{ color: 'var(--text-gray)' }}>{exercise.duration}</p>
+                    <p className="exercise-duration">{exercise.duration}</p>
                     {renderExerciseDetails(exerciseDetails[exercise.exercise])}
                   </div>
                 ))}
@@ -411,7 +386,7 @@ const WorkoutDay = () => {
 
         {/* Navigation */}
         <div className="card workout-nav">
-          <h3 style={{ marginBottom: '1rem' }}>Week {week} Schedule</h3>
+          <h3 className="section-title">Week {week} Schedule</h3>
           <div className="workout-nav__grid">
             {Array.from({ length: 7 }, (_, i) => i + 1).map(dayNum => {
               const dayWorkout = fitnessData.workoutPlan[`week${week}`][`day${dayNum}`];
@@ -423,10 +398,10 @@ const WorkoutDay = () => {
                   to={`/plan/workout/${week}/${dayNum}`}
                   className={`workout-nav__day ${isCurrentDay ? 'is-active' : ''}`}
                 >
-                  <div style={{ fontSize: '0.75rem', marginBottom: '0.25rem' }}>
+                  <div className="workout-nav__label">
                     {dayNames[dayNum - 1].slice(0, 3)}
                   </div>
-                  <div style={{ fontSize: '0.875rem', fontWeight: '600' }}>
+                  <div className="workout-nav__icon">
                     {dayWorkout.type === 'rest' ? '🛌' : '💪'}
                   </div>
                 </Link>
@@ -435,8 +410,8 @@ const WorkoutDay = () => {
           </div>
         </div>
 
-        <div className="card workout-log" style={{ marginTop: '2rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>📝 Log Workout Performance</h3>
+        <div className="card workout-log card--spaced">
+          <h3 className="section-title">📝 Log Workout Performance</h3>
           <div className="workout-log__grid">
             <div className="form-group">
               <label className="form-label">Calories Burned</label>
@@ -446,7 +421,7 @@ const WorkoutDay = () => {
                 value={logData.caloriesBurned}
                 onChange={(e) => setLogData(prev => ({ ...prev, caloriesBurned: e.target.value }))}
               />
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-gray)', marginTop: '0.35rem' }}>
+              <p className="workout-log__hint">
                 Estimated: {estimatedCalories} cal
               </p>
             </div>
@@ -473,21 +448,17 @@ const WorkoutDay = () => {
           </div>
           <div className="workout-log__actions">
             <button
-              className="btn"
+              className={`btn workout-log__btn ${isCompleted ? 'is-muted' : 'is-inactive'}`}
               onClick={() => handleLogWorkout(false)}
-              style={{
-                background: isCompleted ? '#e2e8f0' : 'linear-gradient(135deg, #0f172a, #1f2937)',
-                color: isCompleted ? '#0f172a' : 'white'
-              }}
             >
-              <XCircle size={16} style={{ marginRight: '0.35rem' }} /> Not Done
+              <XCircle size={16} className="workout-log__icon" /> Not Done
             </button>
-            <button className="btn btn-primary" onClick={() => handleLogWorkout(true)}>
-              <CheckCircle2 size={16} style={{ marginRight: '0.35rem' }} /> Done
+            <button className="btn btn-primary workout-log__btn" onClick={() => handleLogWorkout(true)}>
+              <CheckCircle2 size={16} className="workout-log__icon" /> Done
             </button>
           </div>
           {logStatus && (
-            <p style={{ marginTop: '0.75rem', color: 'var(--text-gray)' }}>{logStatus}</p>
+            <p className="workout-log__status">{logStatus}</p>
           )}
         </div>
       </div>

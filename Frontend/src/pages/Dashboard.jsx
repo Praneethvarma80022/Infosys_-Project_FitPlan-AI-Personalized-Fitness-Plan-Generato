@@ -11,8 +11,8 @@ const Dashboard = () => {
   // 1. SAFETY CHECK: If data is missing, show loading instead of crashing
   if (!user || !fitnessData || !fitnessData.workoutPlan) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ fontSize: '1.2rem', color: '#6b7280' }}>Loading your fitness plan...</p>
+      <div className="page-loader">
+        <p className="page-loader__text">Loading your fitness plan...</p>
       </div>
     );
   }
@@ -27,9 +27,18 @@ const Dashboard = () => {
 
   // Safe access to BMI Category
   // We default to a gray color if bmiCategory is missing to prevent the "reading 'color'" crash
-  const bmiColor = fitnessData.bmiCategory?.color || '#6b7280';
   const bmiCategoryName = fitnessData.bmiCategory?.category || 'Calculating...';
   const bmiRisk = fitnessData.bmiCategory?.risk || 'Unknown';
+  const bmiTone = (bmiCategoryName || '').toLowerCase();
+  const bmiToneClass = bmiTone.includes('under')
+    ? 'bmi-tone--under'
+    : bmiTone.includes('normal')
+      ? 'bmi-tone--normal'
+      : bmiTone.includes('overweight')
+        ? 'bmi-tone--over'
+        : bmiTone.includes('obese')
+          ? 'bmi-tone--obese'
+          : 'bmi-tone--neutral';
 
   const getBMIPosition = (bmi) => {
     const val = parseFloat(bmi || 0);
@@ -74,15 +83,15 @@ const Dashboard = () => {
         <div className="container page-hero__content">
           <div className="page-hero__title">
             <div>
-              <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+              <h1 className="page-hero__headline">
                 Welcome, {user.fitnessGoal ? user.fitnessGoal.replace('_', ' ') : 'User'}! 👋
               </h1>
-              <p style={{ opacity: 0.9 }}>
+              <p className="page-hero__lede">
                 Ready for Week {currentWeek} of your journey?
               </p>
             </div>
             <div className="page-hero__actions">
-              <Link to="/profile" className="btn" style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', textDecoration: 'none' }}>
+              <Link to="/profile" className="btn btn-ghost btn-link">
                 Profile
               </Link>
             </div>
@@ -90,66 +99,64 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <div className="container" style={{ padding: '2rem 0' }}>
+      <div className="container section-spacing dashboard-content">
         {/* Quick Stats */}
         <div className="dashboard-stats">
           <div className="card stat-card">
-            <h3 style={{ color: 'var(--fitness-green)', fontSize: '2rem' }}>{currentWeek}/10</h3>
-            <p style={{ color: 'var(--text-gray)' }}>Weeks Completed</p>
+            <h3 className="stat-value stat-value--green">{currentWeek}/10</h3>
+            <p className="stat-label">Weeks Completed</p>
           </div>
           <div className="card stat-card">
-            <h3 style={{ color: 'var(--energy-orange)', fontSize: '2rem' }}>{fitnessData.targetCalories}</h3>
-            <p style={{ color: 'var(--text-gray)' }}>Daily Calories</p>
+            <h3 className="stat-value stat-value--orange">{fitnessData.targetCalories}</h3>
+            <p className="stat-label">Daily Calories</p>
           </div>
           <div className="card stat-card">
-            <h3 style={{ color: 'var(--fitness-green)', fontSize: '2rem' }}>{fitnessData.bmi}</h3>
-            <p style={{ color: 'var(--text-gray)' }}>BMI Score</p>
+            <h3 className="stat-value stat-value--green">{fitnessData.bmi}</h3>
+            <p className="stat-label">BMI Score</p>
           </div>
         </div>
 
         {/* BMI Health Indicator - FIXED CRASH HERE */}
-        <div className="card bmi-card" style={{ marginBottom: '2rem' }}>
-          <h3 style={{ marginBottom: '1rem', color: 'var(--text-dark)' }}>📊 Health Assessment</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-            <div style={{ textAlign: 'center' }}>
-              <h4 style={{ color: bmiColor, fontSize: '2rem', marginBottom: '0.25rem' }}>{fitnessData.bmi}</h4>
-              <p style={{ color: 'var(--text-gray)', fontSize: '0.875rem' }}>BMI</p>
+        <div className="card bmi-card card--spaced">
+          <h3 className="section-title">📊 Health Assessment</h3>
+          <div className="bmi-summary-grid">
+            <div className="bmi-summary-item">
+              <h4 className={`bmi-summary-value ${bmiToneClass}`}>{fitnessData.bmi}</h4>
+              <p className="bmi-summary-label">BMI</p>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <h4 style={{ color: bmiColor, fontSize: '1.25rem', marginBottom: '0.25rem' }}>{bmiCategoryName}</h4>
-              <p style={{ color: 'var(--text-gray)', fontSize: '0.875rem' }}>Category</p>
+            <div className="bmi-summary-item">
+              <h4 className={`bmi-summary-value ${bmiToneClass}`}>{bmiCategoryName}</h4>
+              <p className="bmi-summary-label">Category</p>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <h4 style={{ color: bmiColor, fontSize: '1.25rem', marginBottom: '0.25rem' }}>{bmiRisk} Risk</h4>
-              <p style={{ color: 'var(--text-gray)', fontSize: '0.875rem' }}>Health Risk</p>
+            <div className="bmi-summary-item">
+              <h4 className={`bmi-summary-value ${bmiToneClass}`}>{bmiRisk} Risk</h4>
+              <p className="bmi-summary-label">Health Risk</p>
             </div>
           </div>
           <div>
-            <h4 style={{ marginBottom: '0.5rem', fontSize: '1rem' }}>BMI Scale</h4>
-            <div className="bmi-scale">
-              <div className="bmi-indicator" style={{ left: `${getBMIPosition(fitnessData.bmi)}%` }}></div>
-            </div>
+            <h4 className="bmi-scale__title">BMI Scale</h4>
+            <progress className="bmi-scale" max="100" value={getBMIPosition(fitnessData.bmi)} />
             <div className="bmi-labels">
-              <span>Underweight<br/>&lt;18.5</span>
-              <span>Normal<br/>18.5-24.9</span>
-              <span>Overweight<br/>25-29.9</span>
-              <span>Obese<br/>30-34.9</span>
-              <span>Extremely Obese<br/>≥35</span>
+              <span>Underweight<br />&lt;18.5</span>
+              <span>Normal<br />18.5-24.9</span>
+              <span>Overweight<br />25-29.9</span>
+              <span>Obese<br />30-34.9</span>
+              <span>Extremely Obese<br />≥35</span>
             </div>
           </div>
         </div>
 
         {/* Workout & Diet Section */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+        <div className="dashboard-grid">
           
           {/* Workout Card */}
           <div className="card">
-            <h3 style={{ marginBottom: '1rem', color: 'var(--fitness-green)' }}>🏋️ Today's Workout</h3>
+            <h3 className="card-title card-title--green">🏋️ Today's Workout</h3>
             {todaysWorkout ? (
               <div>
-                <p style={{ fontSize: '1.25rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>{todaysWorkout.title}</p>
-                <p style={{ color: 'var(--text-gray)', marginBottom: '1rem' }}>{todaysWorkout.description || `Phase: ${todaysWorkout.phase}`}</p>
-                <Link to={`/plan/workout/${currentWeek}/${currentDay}`} className="btn btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                <p className="workout-title">{todaysWorkout.title}</p>
+                <p className="card-subtitle">{todaysWorkout.description || `Phase: ${todaysWorkout.phase}`}</p>
+                <Link to={`/plan/workout/${currentWeek}/${currentDay}`} className="btn btn-primary btn-link">
                   Start Workout
                 </Link>
               </div>
@@ -160,15 +167,15 @@ const Dashboard = () => {
 
           {/* Diet Card */}
           <div className="card">
-            <h3 style={{ marginBottom: '1rem', color: 'var(--energy-orange)' }}>🍽️ Today's Meals</h3>
+            <h3 className="card-title card-title--orange">🍽️ Today's Meals</h3>
             {thisWeeksDiet && thisWeeksDiet[`day${currentDay}`] ? (
               <div>
-                <ul style={{ listStyle: 'none', marginBottom: '1rem' }}>
-                  <li style={{marginBottom: '0.5rem'}}><strong>☕ Breakfast:</strong> {thisWeeksDiet[`day${currentDay}`].meals.breakfast.name}</li>
-                  <li style={{marginBottom: '0.5rem'}}><strong>🥗 Lunch:</strong> {thisWeeksDiet[`day${currentDay}`].meals.lunch.name}</li>
+                <ul className="meal-list">
+                  <li><strong>☕ Breakfast:</strong> {thisWeeksDiet[`day${currentDay}`].meals.breakfast.name}</li>
+                  <li><strong>🥗 Lunch:</strong> {thisWeeksDiet[`day${currentDay}`].meals.lunch.name}</li>
                   <li><strong>🌙 Dinner:</strong> {thisWeeksDiet[`day${currentDay}`].meals.dinner.name}</li>
                 </ul>
-                <Link to={`/plan/diet/${currentWeek}`} className="btn btn-secondary" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                <Link to={`/plan/diet/${currentWeek}`} className="btn btn-secondary btn-link">
                   View Full Diet
                 </Link>
               </div>
@@ -180,50 +187,48 @@ const Dashboard = () => {
 
         <div className="dashboard-panels">
           <div className="card">
-            <h3 style={{ marginBottom: '1rem' }}>🎯 Goal Completion</h3>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <h3 className="section-title">🎯 Goal Completion</h3>
+            <div className="goal-header">
               <span>{startWeight} kg → {targetWeight} kg</span>
               <span>{goalPercent.toFixed(0)}%</span>
             </div>
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${goalPercent}%` }}></div>
-            </div>
-            <p style={{ marginTop: '0.75rem', color: 'var(--text-gray)' }}>
+            <progress className="progress-bar" max="100" value={goalPercent} />
+            <p className="goal-note">
               Remaining: {Math.max(0, currentWeight - targetWeight)} kg
             </p>
           </div>
 
           <div className="card">
-            <h3 style={{ marginBottom: '1rem' }}>🩺 Health Guidance</h3>
+            <h3 className="section-title">🩺 Health Guidance</h3>
             {recommendations ? (
               <div>
                 {recommendations.alerts?.length > 0 && (
-                  <div style={{ marginBottom: '1rem', color: '#b91c1c' }}>
+                  <div className="recommendations-alerts">
                     {recommendations.alerts.map((alert, index) => (
                       <p key={index}>⚠️ {alert}</p>
                     ))}
                   </div>
                 )}
-                <p style={{ marginBottom: '0.5rem', fontWeight: '600' }}>Safe Workouts</p>
-                <p style={{ color: 'var(--text-gray)', marginBottom: '1rem' }}>
+                <p className="recommendations-label">Safe Workouts</p>
+                <p className="recommendations-text">
                   {recommendations.safeWorkouts?.length > 0 ? recommendations.safeWorkouts.join(', ') : 'Standard plan is safe.'}
                 </p>
-                <p style={{ marginBottom: '0.5rem', fontWeight: '600' }}>Diet Focus</p>
-                <p style={{ color: 'var(--text-gray)' }}>
+                <p className="recommendations-label">Diet Focus</p>
+                <p className="recommendations-text">
                   {recommendations.dietRestrictions?.length > 0 ? recommendations.dietRestrictions.join(', ') : 'Balanced intake recommended.'}
                 </p>
               </div>
             ) : (
-              <p style={{ color: 'var(--text-gray)' }}>Loading recommendations...</p>
+              <p className="card-subtitle">Loading recommendations...</p>
             )}
           </div>
 
           <div className="card body-transform-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ marginBottom: '1rem' }}>🌟 Body Transformation</h3>
+            <div className="body-transform__header">
+              <h3 className="section-title">🌟 Body Transformation</h3>
               <span className="body-transform__label">Week {currentWeek} → 10</span>
             </div>
-            <p style={{ color: 'var(--text-gray)', marginBottom: '1rem' }}>
+            <p className="card-subtitle">
               Stay consistent. Small steps create visible change over time.
             </p>
             <div className="body-transform">
@@ -236,10 +241,10 @@ const Dashboard = () => {
 
         {/* Quick Links */}
         <div className="card">
-          <h3 style={{ marginBottom: '1rem' }}>Quick Actions</h3>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <Link to="/plan/overview" className="btn" style={{background:'#e5e7eb', textDecoration:'none', color:'black'}}>View Full Plan</Link>
-            <Link to="/progress" className="btn" style={{background:'#e5e7eb', textDecoration:'none', color:'black'}}>Check Progress</Link>
+          <h3 className="section-title">Quick Actions</h3>
+          <div className="quick-actions">
+            <Link to="/plan/overview" className="btn btn-muted btn-link">View Full Plan</Link>
+            <Link to="/progress" className="btn btn-muted btn-link">Check Progress</Link>
           </div>
         </div>
 

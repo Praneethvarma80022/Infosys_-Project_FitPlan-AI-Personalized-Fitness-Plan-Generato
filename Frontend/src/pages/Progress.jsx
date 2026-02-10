@@ -21,14 +21,32 @@ const Progress = () => {
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackResult, setFeedbackResult] = useState(null);
   const [activityRevision, setActivityRevision] = useState(0);
+  const [themeMode, setThemeMode] = useState(() => (
+    typeof document !== 'undefined' && document.body.classList.contains('dark-theme')
+      ? 'dark'
+      : 'light'
+  ));
 
   if (!user || !fitnessData) {
-    return <div>Loading...</div>;
+    return (
+      <div className="page-loader">
+        <p className="page-loader__text">Loading...</p>
+      </div>
+    );
   }
 
   useEffect(() => {
     fetchProgressSummary();
     fetchPredictions();
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const observer = new MutationObserver(() => {
+      setThemeMode(document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -123,14 +141,30 @@ const Progress = () => {
     orange: '#f97316',
     gray: '#9ca3af'
   };
-
   const mockLabels = useMemo(() => (
     ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
   ), []);
-
   const mockWeight = useMemo(() => (
     [startWeight, startWeight - 0.2, startWeight - 0.3, startWeight - 0.4, startWeight - 0.5, startWeight - 0.6, currentWeight]
   ), [startWeight, currentWeight]);
+  const chartAxisColor = themeMode === 'dark' ? '#e5e7eb' : '#1f2937';
+  const chartGridColor = themeMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)';
+  const baseChartScales = useMemo(() => ({
+    x: {
+      ticks: { color: chartAxisColor },
+      grid: { color: chartGridColor }
+    },
+    y: {
+      ticks: { color: chartAxisColor },
+      grid: { color: chartGridColor },
+      beginAtZero: true
+    }
+  }), [chartAxisColor, chartGridColor]);
+  const baseChartOptions = useMemo(() => ({
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: baseChartScales
+  }), [baseChartScales]);
 
   const weightHistory = useMemo(() => {
     if (progressRows.length > 0) {
@@ -139,7 +173,6 @@ const Progress = () => {
         value: row.weight_kg
       }));
     }
-
     return mockLabels.map((label, index) => ({
       date: label,
       value: mockWeight[index]
@@ -158,7 +191,7 @@ const Progress = () => {
       date: entry.date,
       value: Number((entry.value / ((height / 100) * (height / 100))).toFixed(1))
     }));
-  }, [progressRows, weightHistory, height]);
+  }, [progressRows, height, weightHistory]);
 
   const caloriesSeries = useMemo(() => {
     const map = progressSummary?.caloriesByDate || {};
@@ -213,30 +246,26 @@ const Progress = () => {
         <div className="container page-hero__content">
           <div className="page-hero__title">
             <div>
-              <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+              <h1 className="page-hero__headline">
                 Progress Tracking
               </h1>
-              <p style={{ opacity: 0.9 }}>
+              <p className="page-hero__lede">
                 Monitor your fitness journey and achievements
               </p>
             </div>
-            <Link to="/dashboard" className="btn" style={{ 
-              backgroundColor: 'rgba(255,255,255,0.2)', 
-              color: 'white',
-              textDecoration: 'none'
-            }}>
+            <Link to="/dashboard" className="btn btn-ghost btn-link">
               ← Dashboard
             </Link>
           </div>
         </div>
       </header>
 
-      <div className="container" style={{ padding: '2rem 0' }}>
+      <div className="container section-spacing">
         {/* Overall Progress */}
-        <div className="card progress-overall" style={{ marginBottom: '2rem' }}>
-          <h3 style={{ marginBottom: '1.5rem' }}>Overall Progress</h3>
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+        <div className="card progress-overall card--spaced">
+          <h3 className="section-title">Overall Progress</h3>
+          <div className="progress-row">
+            <div className="progress-row__header">
               <span>Program Completion</span>
               <span>{currentWeek}/10 weeks ({Math.round((currentWeek/10) * 100)}%)</span>
             </div>
@@ -248,8 +277,8 @@ const Progress = () => {
             </div>
           </div>
           
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+          <div className="progress-row">
+            <div className="progress-row__header">
               <span>Workouts Completed</span>
               <span>{mergedCompletedWorkouts}/{totalWorkouts} ({Math.round(progressPercentage)}%)</span>
             </div>
@@ -261,8 +290,8 @@ const Progress = () => {
             </div>
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+          <div className="progress-row">
+            <div className="progress-row__header">
               <span>Meals Logged</span>
               <span>{activityStats.mealsCompleted}/{totalMeals} ({Math.round(mealProgressPercentage)}%)</span>
             </div>
@@ -274,8 +303,8 @@ const Progress = () => {
             </div>
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+          <div className="progress-row">
+            <div className="progress-row__header">
               <span>Goal Completion</span>
               <span>{goalPercent.toFixed(0)}%</span>
             </div>
@@ -285,7 +314,7 @@ const Progress = () => {
                 style={{ width: `${goalPercent}%` }}
               ></div>
             </div>
-            <p style={{ marginTop: '0.5rem', color: 'var(--text-gray)' }}>
+            <p className="progress-row__note">
               {startWeight} kg → {targetWeight} kg, remaining {Math.max(0, currentWeight - targetWeight)} kg
             </p>
           </div>
@@ -294,41 +323,41 @@ const Progress = () => {
         {/* Key Metrics */}
         <div className="progress-metrics">
           <div className="card metric-card">
-            <h3 style={{ color: 'var(--fitness-green)', fontSize: '2rem' }}>
+            <h3 className="metric-value metric-value--green">
               {currentWeight}kg
             </h3>
-            <p style={{ color: 'var(--text-gray)' }}>Current Weight</p>
-            <p style={{ fontSize: '0.875rem', color: weightChange >= 0 ? 'var(--energy-orange)' : 'var(--fitness-green)' }}>
+            <p className="metric-label">Current Weight</p>
+            <p className={`metric-sub ${weightChange >= 0 ? 'metric-sub--warn' : 'metric-sub--accent'}`}>
               {weightChange >= 0 ? '+' : ''}{weightChange}kg from start
             </p>
           </div>
           
           <div className="card metric-card">
-            <h3 style={{ color: 'var(--energy-orange)', fontSize: '2rem' }}>
+            <h3 className="metric-value metric-value--orange">
               {mergedCompletedWorkouts}
             </h3>
-            <p style={{ color: 'var(--text-gray)' }}>Workouts Done</p>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+            <p className="metric-label">Workouts Done</p>
+            <p className="metric-sub">
               {Math.max(0, totalWorkouts - mergedCompletedWorkouts)} remaining
             </p>
           </div>
           
           <div className="card metric-card">
-            <h3 style={{ color: 'var(--fitness-green)', fontSize: '2rem' }}>
+            <h3 className="metric-value metric-value--green">
               {caloriesSeries.values.reduce((sum, value) => sum + value, 0)}
             </h3>
-            <p style={{ color: 'var(--text-gray)' }}>Calories Burned</p>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+            <p className="metric-label">Calories Burned</p>
+            <p className="metric-sub">
               Total from workouts
             </p>
           </div>
           
           <div className="card metric-card">
-            <h3 style={{ color: 'var(--energy-orange)', fontSize: '2rem' }}>
+            <h3 className="metric-value metric-value--orange">
               {fitnessData.targetCalories}
             </h3>
-            <p style={{ color: 'var(--text-gray)' }}>Daily Calories</p>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+            <p className="metric-label">Daily Calories</p>
+            <p className="metric-sub">
               Target intake
             </p>
           </div>
@@ -337,7 +366,7 @@ const Progress = () => {
         {/* Visualization Dashboard */}
         <div className="progress-charts">
           <div className="card chart-card">
-            <h3 style={{ marginBottom: '1rem' }}>📈 Weight Progress</h3>
+            <h3 className="chart-title">📈 Weight Progress</h3>
             <Line
               data={{
                 labels: weightHistory.map(entry => entry.date),
@@ -347,16 +376,17 @@ const Progress = () => {
                     data: weightHistory.map(entry => entry.value),
                     borderColor: chartColors.green,
                     backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                    tension: 0.3
+                    tension: 0.35,
+                    cubicInterpolationMode: 'monotone'
                   }
                 ]
               }}
-              options={{ responsive: true, plugins: { legend: { display: false } } }}
+              options={baseChartOptions}
             />
           </div>
 
           <div className="card chart-card">
-            <h3 style={{ marginBottom: '1rem' }}>📊 BMI Progress</h3>
+            <h3 className="chart-title">📊 BMI Progress</h3>
             <Line
               data={{
                 labels: bmiHistory.map(entry => entry.date),
@@ -366,16 +396,17 @@ const Progress = () => {
                     data: bmiHistory.map(entry => entry.value),
                     borderColor: chartColors.orange,
                     backgroundColor: 'rgba(249, 115, 22, 0.12)',
-                    tension: 0.3
+                    tension: 0.35,
+                    cubicInterpolationMode: 'monotone'
                   }
                 ]
               }}
-              options={{ responsive: true, plugins: { legend: { display: false } } }}
+              options={baseChartOptions}
             />
           </div>
 
           <div className="card chart-card">
-            <h3 style={{ marginBottom: '1rem' }}>🔥 Calories Burned</h3>
+            <h3 className="chart-title">🔥 Calories Burned</h3>
             <Bar
               data={{
                 labels: caloriesSeries.labels,
@@ -383,16 +414,18 @@ const Progress = () => {
                   {
                     label: 'Calories',
                     data: caloriesSeries.values,
-                    backgroundColor: 'rgba(34, 197, 94, 0.6)'
+                    backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                    borderRadius: 8,
+                    borderSkipped: false
                   }
                 ]
               }}
-              options={{ responsive: true, plugins: { legend: { display: false } } }}
+              options={baseChartOptions}
             />
           </div>
 
           <div className="card chart-card">
-            <h3 style={{ marginBottom: '1rem' }}>✅ Workout Consistency</h3>
+            <h3 className="chart-title">✅ Workout Consistency</h3>
             <Bar
               data={{
                 labels: ['Completed', 'Remaining'],
@@ -400,16 +433,18 @@ const Progress = () => {
                   {
                     label: 'Workouts',
                     data: [mergedCompletedWorkouts, Math.max(0, totalWorkouts - mergedCompletedWorkouts)],
-                    backgroundColor: [chartColors.green, chartColors.gray]
+                    backgroundColor: [chartColors.green, chartColors.gray],
+                    borderRadius: 8,
+                    borderSkipped: false
                   }
                 ]
               }}
-              options={{ responsive: true, plugins: { legend: { display: false } } }}
+              options={baseChartOptions}
             />
           </div>
 
           <div className="card chart-card">
-            <h3 style={{ marginBottom: '1rem' }}>🧾 Activity Completion</h3>
+            <h3 className="chart-title">🧾 Activity Completion</h3>
             <Bar
               data={{
                 labels: ['Workouts', 'Meals'],
@@ -417,7 +452,9 @@ const Progress = () => {
                   {
                     label: 'Completed',
                     data: [mergedCompletedWorkouts, activityStats.mealsCompleted],
-                    backgroundColor: ['rgba(34, 197, 94, 0.6)', 'rgba(249, 115, 22, 0.6)']
+                    backgroundColor: ['rgba(34, 197, 94, 0.6)', 'rgba(249, 115, 22, 0.6)'],
+                    borderRadius: 8,
+                    borderSkipped: false
                   }
                 ]
               }}
@@ -425,8 +462,9 @@ const Progress = () => {
                 responsive: true,
                 plugins: { legend: { display: false } },
                 scales: {
+                  ...baseChartScales,
                   y: {
-                    beginAtZero: true,
+                    ...baseChartScales.y,
                     suggestedMax: Math.max(totalWorkouts, totalMeals)
                   }
                 }
@@ -435,7 +473,7 @@ const Progress = () => {
           </div>
 
           <div className="card chart-card">
-            <h3 style={{ marginBottom: '1rem' }}>🏋️ Exercise Performance</h3>
+            <h3 className="chart-title">🏋️ Exercise Performance</h3>
             <Line
               data={{
                 labels: performanceSeries.labels,
@@ -445,11 +483,12 @@ const Progress = () => {
                     data: performanceSeries.values,
                     borderColor: chartColors.green,
                     backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                    tension: 0.3
+                    tension: 0.35,
+                    cubicInterpolationMode: 'monotone'
                   }
                 ]
               }}
-              options={{ responsive: true, plugins: { legend: { display: false } } }}
+              options={baseChartOptions}
             />
           </div>
 
@@ -457,7 +496,7 @@ const Progress = () => {
 
         <div className="progress-compare-row">
           <div className="card chart-card progress-prediction">
-            <h3 style={{ marginBottom: '1rem' }}>🔮 Prediction Trend</h3>
+            <h3 className="chart-title">🔮 Prediction Trend</h3>
             <Line
               data={{
                 labels: predictionSeries.labels,
@@ -468,20 +507,18 @@ const Progress = () => {
                     borderColor: chartColors.orange,
                     backgroundColor: 'rgba(249, 115, 22, 0.12)',
                     borderDash: [6, 6],
-                    tension: 0.3
+                    tension: 0.35,
+                    cubicInterpolationMode: 'monotone'
                   }
                 ]
               }}
-              options={{ responsive: true, plugins: { legend: { display: false } } }}
+              options={baseChartOptions}
             />
-            <p style={{ marginTop: '0.75rem', color: 'var(--text-gray)' }}>
-              Predicted target date: {predictions?.predictedTargetDate || 'Not enough data yet'}
-            </p>
           </div>
 
           {/* Before vs After Comparison */}
           <div className="card progress-compare">
-            <h3 style={{ marginBottom: '1.5rem' }}>📷 Before vs After Comparison</h3>
+            <h3 className="section-title">📷 Before vs After Comparison</h3>
             <div className="progress-compare__chart">
               <Bar
                 data={{
@@ -490,19 +527,21 @@ const Progress = () => {
                     {
                       label: 'Weight (kg)',
                       data: [startWeight, currentWeight, targetWeight],
-                      backgroundColor: [chartColors.gray, chartColors.green, chartColors.orange]
+                      backgroundColor: [chartColors.gray, chartColors.green, chartColors.orange],
+                      borderRadius: 8,
+                      borderSkipped: false
                     }
                   ]
                 }}
-                options={{ responsive: true, plugins: { legend: { display: false } } }}
+                options={baseChartOptions}
               />
             </div>
           </div>
         </div>
 
         {/* Weekly Breakdown */}
-        <div className="card progress-weekly" style={{ marginBottom: '2rem' }}>
-          <h3 style={{ marginBottom: '1.5rem' }}>Weekly Breakdown</h3>
+        <div className="card progress-weekly card--spaced">
+          <h3 className="section-title">Weekly Breakdown</h3>
           <div className="weekly-grid">
             {Array.from({ length: 10 }, (_, i) => i + 1).map(week => {
               const weekCompleted = activityStats.workoutByWeek[week] || 0;
@@ -516,11 +555,11 @@ const Progress = () => {
                   className={`weekly-card ${isCompleted ? 'is-complete' : isCurrent ? 'is-current' : 'is-upcoming'}`}
                 >
                   <h4>Week {week}</h4>
-                  <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+                  <p className="weekly-card__status">
                     {isCompleted ? '✅ Completed' : isCurrent ? '🔄 In Progress' : '⏳ Upcoming'}
                   </p>
                   {(isCompleted || isCurrent) && (
-                    <p style={{ fontSize: '0.75rem', color: isCompleted ? 'var(--fitness-green)' : 'var(--energy-orange)' }}>
+                    <p className="weekly-card__count">
                       {weekCompleted}/7 workouts
                     </p>
                   )}
@@ -531,8 +570,8 @@ const Progress = () => {
         </div>
 
         {/* Sentiment Analysis & Feedback */}
-        <div className="card progress-feedback" style={{ marginBottom: '2rem' }}>
-          <h3 style={{ marginBottom: '1.5rem' }}>🧠 Daily Mood & Feedback</h3>
+        <div className="card progress-feedback card--spaced">
+          <h3 className="section-title">🧠 Daily Mood & Feedback</h3>
           <form onSubmit={handleFeedbackSubmit}>
             <div className="form-group">
               <label className="form-label">How do you feel today?</label>
@@ -547,7 +586,7 @@ const Progress = () => {
             <button type="submit" className="btn btn-primary">Analyze Mood</button>
           </form>
           {feedbackResult && (
-            <div style={{ marginTop: '1rem' }}>
+            <div className="feedback-result">
               <p>Sentiment: <strong>{feedbackResult.sentiment}</strong></p>
               <p>Suggested Intensity: <strong>{feedbackResult.intensity}</strong></p>
             </div>
@@ -555,51 +594,45 @@ const Progress = () => {
         </div>
 
         {/* Achievements */}
-        <div className="card" style={{ marginBottom: '2rem' }}>
-          <h3 style={{ marginBottom: '1.5rem' }}>🏆 Achievements</h3>
+        <div className="card card--spaced">
+          <h3 className="section-title">🏆 Achievements</h3>
           <div className="achievement-grid">
             <div className="achievement-card">
               <h4>🎯 First Week Complete</h4>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+              <p className="achievement-text">
                 Complete your first week of training
               </p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>
+              <p className="achievement-subtext">
                 Not yet achieved
               </p>
             </div>
             
             <div className="achievement-card">
               <h4>💪 Strength Builder</h4>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+              <p className="achievement-text">
                 Complete 10 strength training sessions
               </p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>
+              <p className="achievement-subtext">
                 0/10 sessions
               </p>
             </div>
             
             <div className="achievement-card">
               <h4>🔥 Calorie Crusher</h4>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+              <p className="achievement-text">
                 Burn 1000 calories through workouts
               </p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>
+              <p className="achievement-subtext">
                 {caloriesSeries.values.reduce((sum, value) => sum + value, 0)}/1000 calories
               </p>
             </div>
             
-            <div style={{ 
-              padding: '1rem', 
-              backgroundColor: '#f9fafb', 
-              borderRadius: '0.5rem',
-              border: '1px solid var(--border-light)',
-              opacity: 0.6
-            }}>
+            <div className="achievement-card achievement-card--muted">
               <h4>🏃 Consistency Champion</h4>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-gray)' }}>
+              <p className="achievement-text">
                 Complete 7 consecutive days of workouts
               </p>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-gray)' }}>
+              <p className="achievement-subtext">
                 Not yet achieved
               </p>
             </div>
@@ -608,35 +641,23 @@ const Progress = () => {
 
         {/* Next Steps */}
         <div className="card">
-          <h3 style={{ marginBottom: '1rem' }}>🎯 Next Steps</h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-            gap: '1rem'
-          }}>
+          <h3 className="section-title">🎯 Next Steps</h3>
+          <div className="next-steps">
             <Link 
               to={`/plan/workout/${currentWeek}/1`}
-              className="btn btn-primary"
-              style={{ textDecoration: 'none', textAlign: 'center' }}
+              className="btn btn-primary btn-link next-step"
             >
               Start Today's Workout
             </Link>
             <Link 
               to={`/plan/diet/${currentWeek}`}
-              className="btn btn-secondary"
-              style={{ textDecoration: 'none', textAlign: 'center' }}
+              className="btn btn-secondary btn-link next-step"
             >
               View Diet Plan
             </Link>
             <Link 
               to="/plan/overview"
-              className="btn"
-              style={{ 
-                backgroundColor: 'var(--text-gray)', 
-                color: 'white',
-                textDecoration: 'none', 
-                textAlign: 'center' 
-              }}
+              className="btn btn-muted btn-link next-step"
             >
               Plan Overview
             </Link>

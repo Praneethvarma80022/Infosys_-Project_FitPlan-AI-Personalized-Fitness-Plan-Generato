@@ -117,6 +117,19 @@ export const UserProvider = ({ children }) => {
     };
   };
 
+  const estimateServingGrams = (meal) => {
+    if (!meal) return null;
+    const protein = meal.protein || 0;
+    const carbs = meal.carbs || 0;
+    const fat = meal.fat || 0;
+    const baseGrams = protein + carbs + fat;
+    if (!baseGrams) return null;
+    const macroCalories = (protein * 4) + (carbs * 4) + (fat * 9);
+    if (!macroCalories) return Math.round(baseGrams);
+    const scale = meal.calories ? meal.calories / macroCalories : 1;
+    return Math.round(baseGrams * scale);
+  };
+
   const resolveGoalSchedule = (fitnessGoal, fitnessLevel) => {
     const schedules = workoutsData.goalSchedules || {};
     const goalSchedule = schedules[fitnessGoal];
@@ -191,11 +204,16 @@ export const UserProvider = ({ children }) => {
       for (let day = 1; day <= 7; day++) {
         const dayKey = `day${day}`;
         const mealIndex = (week + day) % 3;
+        const attachQuantity = (meal) => ({
+          ...meal,
+          quantity: meal?.quantity || null,
+          quantityGrams: estimateServingGrams(meal)
+        });
         let meals = {
-          breakfast: mealTemplates.breakfast[mealIndex],
-          lunch: mealTemplates.lunch[mealIndex],
-          snack: mealTemplates.snack[mealIndex],
-          dinner: mealTemplates.dinner[mealIndex]
+          breakfast: attachQuantity(mealTemplates.breakfast[mealIndex]),
+          lunch: attachQuantity(mealTemplates.lunch[mealIndex]),
+          snack: attachQuantity(mealTemplates.snack[mealIndex]),
+          dinner: attachQuantity(mealTemplates.dinner[mealIndex])
         };
         const dailyCalories = meals.breakfast.calories + meals.lunch.calories + 
                             meals.snack.calories + meals.dinner.calories;
