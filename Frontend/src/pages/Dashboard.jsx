@@ -1,23 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../context/useUser';
 import fatSlimVideo from '../data/fatslim.mp4';
 import gymVideo from '../data/GYM.mp4';
 
 const Dashboard = () => {
-  const { user, fitnessData, recommendations, fetchRecommendations } = useUser();
+  const { user, fitnessData, recommendations, fetchRecommendations, progressSummary, fetchProgressSummary } = useUser();
   const [isHeroVideoReady, setIsHeroVideoReady] = useState(false);
 
-  // 1. SAFETY CHECK: If data is missing, show loading instead of crashing
-  if (!user || !fitnessData || !fitnessData.workoutPlan) {
-    return (
-      <div className="page-loader">
-        <p className="page-loader__text">Loading your fitness plan...</p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchRecommendations();
+    fetchProgressSummary?.();
+  }, []);
 
-  const currentWeek = 1;
+  const weekProgress = progressSummary?.weekProgress || {};
+  const workoutByWeek = progressSummary?.workoutByWeek || {};
+  const mealByWeek = progressSummary?.mealByWeek || {};
+  const currentWeek = useMemo(() => {
+    for (let week = 1; week <= 10; week += 1) {
+      const entry = weekProgress[week];
+      const isCompleted = entry?.isCompleted ?? ((workoutByWeek[week] || 0) >= 7 && (mealByWeek[week] || 0) >= 28);
+      if (!isCompleted) return week;
+    }
+    return 10;
+  }, [weekProgress, workoutByWeek, mealByWeek]);
   const currentDay = new Date().getDay() || 7;
   
   // Safe access to nested properties
@@ -47,9 +53,14 @@ const Dashboard = () => {
     return val * 2.5; 
   };
 
-  useEffect(() => {
-    fetchRecommendations();
-  }, []);
+  // 1. SAFETY CHECK: If data is missing, show loading instead of crashing
+  if (!user || !fitnessData || !fitnessData.workoutPlan) {
+    return (
+      <div className="page-loader">
+        <p className="page-loader__text">Loading your fitness plan...</p>
+      </div>
+    );
+  }
 
   const startWeight = fitnessData.startWeight || user.weight;
   const targetWeight = fitnessData.targetWeight || user.targetWeight || user.weight;

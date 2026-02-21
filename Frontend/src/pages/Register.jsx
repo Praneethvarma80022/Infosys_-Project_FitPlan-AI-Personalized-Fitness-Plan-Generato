@@ -582,7 +582,7 @@ const Register = () => {
                       rows="3"
                       value={formData.healthNotes}
                       onChange={(e) => handleInputChange('healthNotes', e.target.value)}
-                      placeholder="Low BP, Asthma, Diabetes, None"
+                      placeholder="Example: low blood pressure, asthma, knee pain"
                     />
                     <div style={{ color: 'var(--text-gray)', marginTop: '0.35rem', fontSize: '0.85rem' }}>Optional</div>
                   </div>
@@ -595,7 +595,6 @@ const Register = () => {
                         { key: 'knee_pain', label: 'Knee Pain' },
                         { key: 'back_pain', label: 'Back Pain' },
                         { key: 'heart_condition', label: 'Heart Condition' },
-                        { key: 'diabetes', label: 'Diabetes' },
                         { key: 'asthma', label: 'Asthma' }
                       ].map(problem => (
                         <div

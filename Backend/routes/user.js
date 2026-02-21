@@ -112,18 +112,31 @@ router.get('/dashboard', authorize, async (req, res) => {
 
 router.post('/log-activity', authorize, async (req, res) => {
   try {
-    const { week, day, caloriesBurned, workoutMinutes, performanceScore, isCompleted } = req.body;
-    const completed = typeof isCompleted === 'boolean' ? isCompleted : true;
+    const { week, day, caloriesBurned, workoutMinutes, performanceScore, isCompleted, exercisesCompleted, exercisesTotal, exerciseStatus } = req.body;
+    const parsedCompleted = Number.isFinite(Number(exercisesCompleted)) ? Number(exercisesCompleted) : null;
+    const parsedTotal = Number.isFinite(Number(exercisesTotal)) ? Number(exercisesTotal) : null;
+    const completedByExercises = parsedTotal !== null && parsedTotal > 0
+      ? (parsedCompleted || 0) >= parsedTotal
+      : null;
+    const completed = completedByExercises !== null
+      ? completedByExercises
+      : (typeof isCompleted === 'boolean' ? isCompleted : true);
+    const statusJson = exerciseStatus && typeof exerciseStatus === 'object'
+      ? JSON.stringify(exerciseStatus)
+      : null;
     await pool.execute(
       `INSERT INTO daily_activity 
-       (user_id, week_number, day_number, is_workout_completed, date_completed, calories_burned, workout_minutes, performance_score)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       (user_id, week_number, day_number, is_workout_completed, date_completed, calories_burned, workout_minutes, performance_score, exercises_completed, exercises_total, exercise_status_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE 
          is_workout_completed = VALUES(is_workout_completed),
          date_completed = VALUES(date_completed),
          calories_burned = COALESCE(VALUES(calories_burned), calories_burned),
          workout_minutes = COALESCE(VALUES(workout_minutes), workout_minutes),
-         performance_score = COALESCE(VALUES(performance_score), performance_score)`,
+         performance_score = COALESCE(VALUES(performance_score), performance_score),
+         exercises_completed = COALESCE(VALUES(exercises_completed), exercises_completed),
+         exercises_total = COALESCE(VALUES(exercises_total), exercises_total),
+         exercise_status_json = COALESCE(VALUES(exercise_status_json), exercise_status_json)`,
       [
         req.user,
         week,
@@ -132,11 +145,96 @@ router.post('/log-activity', authorize, async (req, res) => {
         completed ? new Date() : null,
         caloriesBurned || null,
         workoutMinutes || null,
-        performanceScore || null
+        performanceScore || null,
+        parsedCompleted,
+        parsedTotal,
+        statusJson
       ]
     );
 
+    const [weekRows] = await pool.execute(
+      `SELECT COUNT(*) AS completed_days
+       FROM daily_activity
+       WHERE user_id = ? AND week_number = ?
+         AND (
+           (exercises_total IS NOT NULL AND exercises_total > 0 AND exercises_completed >= exercises_total)
+           OR (exercises_total IS NULL AND is_workout_completed = TRUE)
+           OR (exercises_total = 0 AND is_workout_completed = TRUE)
+         )`,
+      [req.user, week]
+    );
+    const [mealRows] = await pool.execute(
+      `SELECT COUNT(*) AS completed_meals
+       FROM meal_logs
+       WHERE user_id = ? AND week_number = ? AND is_eaten = TRUE`,
+      [req.user, week]
+    );
+
+    const completedDays = weekRows[0]?.completed_days || 0;
+    const completedMeals = mealRows[0]?.completed_meals || 0;
+    if (completedDays >= 7 && completedMeals >= 28) {
+      await pool.execute(
+        `UPDATE user_week_progress
+         SET is_completed = TRUE, completed_at = CURDATE()
+         WHERE user_id = ? AND week_number = ?`,
+        [req.user, week]
+      );
+
+      const nextWeek = Number(week) + 1;
+      if (nextWeek <= 10) {
+        await pool.execute(
+          `UPDATE user_week_progress
+           SET is_unlocked = TRUE
+           WHERE user_id = ? AND week_number = ?`,
+          [req.user, nextWeek]
+        );
+      }
+    }
+
     res.json('Activity Logged');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Server Error');
+  }
+});
+
+router.get('/workout/status', authorize, async (req, res) => {
+  try {
+    const week = Number(req.query.week || 1);
+    const day = Number(req.query.day || 1);
+    const [rows] = await pool.execute(
+      `SELECT is_workout_completed, exercises_completed, exercises_total, exercise_status_json
+       FROM daily_activity
+       WHERE user_id = ? AND week_number = ? AND day_number = ?
+       LIMIT 1`,
+      [req.user, week, day]
+    );
+
+    if (rows.length === 0) {
+      return res.json({
+        isCompleted: false,
+        exercisesCompleted: 0,
+        exercisesTotal: 0,
+        exerciseStatus: {}
+      });
+    }
+
+    const row = rows[0];
+    let status = {};
+    if (row.exercise_status_json) {
+      try {
+        status = JSON.parse(row.exercise_status_json) || {};
+      } catch (err) {
+        status = {};
+      }
+    }
+
+    res.json({
+      isCompleted: !!row.is_workout_completed,
+      exercisesCompleted: row.exercises_completed || 0,
+      exercisesTotal: row.exercises_total || 0,
+      exerciseStatus: status
+    });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -165,6 +263,40 @@ router.post('/diet/log', authorize, async (req, res) => {
         protein || 0
       ]
     );
+
+    const [weekRows] = await pool.execute(
+      `SELECT COUNT(*) AS completed_days
+       FROM daily_activity
+       WHERE user_id = ? AND week_number = ? AND is_workout_completed = TRUE`,
+      [req.user, week]
+    );
+    const [mealRows] = await pool.execute(
+      `SELECT COUNT(*) AS completed_meals
+       FROM meal_logs
+       WHERE user_id = ? AND week_number = ? AND is_eaten = TRUE`,
+      [req.user, week]
+    );
+
+    const completedDays = weekRows[0]?.completed_days || 0;
+    const completedMeals = mealRows[0]?.completed_meals || 0;
+    if (completedDays >= 7 && completedMeals >= 28) {
+      await pool.execute(
+        `UPDATE user_week_progress
+         SET is_completed = TRUE, completed_at = CURDATE()
+         WHERE user_id = ? AND week_number = ?`,
+        [req.user, week]
+      );
+
+      const nextWeek = Number(week) + 1;
+      if (nextWeek <= 10) {
+        await pool.execute(
+          `UPDATE user_week_progress
+           SET is_unlocked = TRUE
+           WHERE user_id = ? AND week_number = ?`,
+          [req.user, nextWeek]
+        );
+      }
+    }
 
     res.json({ message: 'Meal logged' });
   } catch (err) {
@@ -324,6 +456,12 @@ router.put('/profile', authorize, async (req, res) => {
          ON DUPLICATE KEY UPDATE weight_kg = VALUES(weight_kg), bmi = VALUES(bmi)`,
         [req.user, resolvedWeight || null, bmi]
       );
+
+      await connection.execute(
+        `INSERT INTO user_profile_history (user_id, updated_at, weight_kg, height_cm, bmi)
+         VALUES (?, NOW(), ?, ?, ?)`,
+        [req.user, resolvedWeight || null, resolvedHeight || null, bmi]
+      );
     }
 
     if (presentPhoto) {
@@ -432,26 +570,119 @@ router.get('/progress/summary', authorize, async (req, res) => {
       [req.user]
     );
 
+    const [historyRows] = await pool.execute(
+      `SELECT updated_at, weight_kg, height_cm, bmi
+       FROM user_profile_history
+       WHERE user_id = ?
+       ORDER BY updated_at ASC`,
+      [req.user]
+    );
+
     const [activityRows] = await pool.execute(
-      `SELECT week_number, day_number, is_workout_completed, date_completed, calories_burned
+      `SELECT week_number, day_number, is_workout_completed, date_completed, calories_burned, exercises_completed, exercises_total
        FROM daily_activity
        WHERE user_id = ?
        ORDER BY week_number, day_number`,
       [req.user]
     );
 
+    const workoutByWeek = activityRows.reduce((acc, row) => {
+      const hasExerciseTotals = row.exercises_total !== null && row.exercises_total !== undefined;
+      const isCompletedByExercises = hasExerciseTotals && row.exercises_total > 0
+        ? row.exercises_completed >= row.exercises_total
+        : null;
+      const isCompleted = isCompletedByExercises !== null
+        ? isCompletedByExercises
+        : !!row.is_workout_completed;
+      if (!isCompleted) return acc;
+      acc[row.week_number] = (acc[row.week_number] || 0) + 1;
+      return acc;
+    }, {});
+
+    const [mealRows] = await pool.execute(
+      `SELECT week_number, day_number, meal_key, is_eaten
+       FROM meal_logs
+       WHERE user_id = ?
+       ORDER BY week_number, day_number`,
+      [req.user]
+    );
+
+    const mealByWeek = {};
+    let mealCompleted = 0;
+    mealRows.forEach(row => {
+      if (!row.is_eaten) return;
+      mealCompleted += 1;
+      mealByWeek[row.week_number] = (mealByWeek[row.week_number] || 0) + 1;
+    });
+
     const caloriesByDate = {};
+    const performanceByDate = {};
     activityRows.forEach(row => {
-      if (!row.date_completed || !row.is_workout_completed) return;
+      const hasExerciseTotals = row.exercises_total !== null && row.exercises_total !== undefined;
+      const isCompletedByExercises = hasExerciseTotals && row.exercises_total > 0
+        ? row.exercises_completed >= row.exercises_total
+        : null;
+      const isCompleted = isCompletedByExercises !== null
+        ? isCompletedByExercises
+        : !!row.is_workout_completed;
+      if (!row.date_completed || !isCompleted) return;
       const dateKey = row.date_completed.toISOString().slice(0, 10);
       caloriesByDate[dateKey] = (caloriesByDate[dateKey] || 0) + (row.calories_burned || 0);
+      const performanceValue = row.performance_score || row.workout_minutes || 0;
+      performanceByDate[dateKey] = Math.max(performanceByDate[dateKey] || 0, performanceValue);
     });
 
     const workoutCompletion = activityRows.reduce((acc, row) => {
-      if (row.is_workout_completed) acc.completed += 1;
+      const hasExerciseTotals = row.exercises_total !== null && row.exercises_total !== undefined;
+      const isCompletedByExercises = hasExerciseTotals && row.exercises_total > 0
+        ? row.exercises_completed >= row.exercises_total
+        : null;
+      const isCompleted = isCompletedByExercises !== null
+        ? isCompletedByExercises
+        : !!row.is_workout_completed;
+      if (isCompleted) acc.completed += 1;
       acc.total += 1;
       return acc;
     }, { completed: 0, total: 0 });
+
+    const exerciseCompletion = activityRows.reduce((acc, row) => {
+      if (row.exercises_total === null || row.exercises_total === undefined) return acc;
+      acc.total += row.exercises_total || 0;
+      acc.completed += row.exercises_completed || 0;
+      return acc;
+    }, { completed: 0, total: 0 });
+
+    const [weekProgressRows] = await pool.execute(
+      `SELECT week_number, is_unlocked, is_completed, completed_at
+       FROM user_week_progress
+       WHERE user_id = ?
+       ORDER BY week_number`,
+      [req.user]
+    );
+    const rawWeekProgress = weekProgressRows.reduce((acc, row) => {
+      acc[row.week_number] = {
+        isUnlocked: !!row.is_unlocked,
+        isCompleted: !!row.is_completed,
+        completedAt: row.completed_at
+      };
+      return acc;
+    }, {});
+    const weekProgress = {};
+    for (let week = 1; week <= 10; week += 1) {
+      const entry = rawWeekProgress[week];
+      const workouts = workoutByWeek[week] || 0;
+      const meals = mealByWeek[week] || 0;
+      const completed = entry?.isCompleted ?? (workouts >= 7 && meals >= 28);
+      const prevCompleted = week === 1
+        ? true
+        : (rawWeekProgress[week - 1]?.isCompleted ?? (((workoutByWeek[week - 1] || 0) >= 7) && ((mealByWeek[week - 1] || 0) >= 28)));
+      const unlocked = entry?.isUnlocked ?? (week === 1 || prevCompleted);
+      weekProgress[week] = {
+        isUnlocked: unlocked,
+        isCompleted: completed,
+        completedAt: entry?.completedAt || null
+      };
+    }
 
     res.json({
       profile: {
@@ -461,8 +692,18 @@ router.get('/progress/summary', authorize, async (req, res) => {
         height: profile?.height_cm || null
       },
       progress: progressRows,
+      profileHistory: historyRows,
       caloriesByDate,
-      workoutCompletion
+      performanceByDate,
+      workoutCompletion,
+      exerciseCompletion,
+      workoutByWeek,
+      mealCompletion: {
+        completed: mealCompleted,
+        total: mealRows.length
+      },
+      mealByWeek,
+      weekProgress
     });
   } catch (err) {
     console.error(err);

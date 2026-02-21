@@ -50,7 +50,21 @@ CREATE TABLE IF NOT EXISTS daily_activity (
   calories_burned INT,
   workout_minutes INT,
   performance_score INT,
+  exercises_completed INT,
+  exercises_total INT,
+  exercise_status_json LONGTEXT,
   UNIQUE KEY unique_day (user_id, week_number, day_number),
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS user_week_progress (
+  week_progress_id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  week_number INT NOT NULL,
+  is_unlocked BOOLEAN DEFAULT FALSE,
+  is_completed BOOLEAN DEFAULT FALSE,
+  completed_at DATE,
+  UNIQUE KEY unique_week (user_id, week_number),
   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
@@ -65,6 +79,16 @@ CREATE TABLE IF NOT EXISTS user_progress (
   performance_score INT,
   note TEXT,
   UNIQUE KEY unique_progress_day (user_id, logged_date),
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS user_profile_history (
+  history_id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  weight_kg DECIMAL(6,2),
+  height_cm DECIMAL(5,2),
+  bmi DECIMAL(4,1),
   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
@@ -100,7 +124,7 @@ CREATE TABLE IF NOT EXISTS meal_logs (
   calories INT,
   protein INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY unique_meal_log (user_id, logged_date, meal_key),
+  UNIQUE KEY unique_meal_log (user_id, week_number, day_number, meal_key),
   FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 

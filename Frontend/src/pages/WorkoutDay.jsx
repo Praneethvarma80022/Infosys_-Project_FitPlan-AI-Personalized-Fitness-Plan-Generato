@@ -1,25 +1,59 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useUser } from '../context/useUser';
 import { Activity, CheckCircle2, Flame, Timer, XCircle } from 'lucide-react';
 
 const WorkoutDay = () => {
   const { week, day } = useParams();
-  const { fitnessData, user } = useUser();
+  const { fitnessData, user, progressSummary, fetchProgressSummary } = useUser();
   const [logStatus, setLogStatus] = useState(null);
   const [isCompleted, setIsCompleted] = useState(false);
   const [exerciseStatus, setExerciseStatus] = useState({});
   const [exerciseDetails, setExerciseDetails] = useState({});
+  const lastExerciseLogRef = useRef(null);
   const [logData, setLogData] = useState({
     caloriesBurned: '',
     workoutMinutes: '',
     performanceScore: ''
   });
 
+  useEffect(() => {
+    fetchProgressSummary?.();
+  }, [fetchProgressSummary]);
+
   if (!fitnessData) {
     return (
       <div className="page-loader">
         <p className="page-loader__text">Loading...</p>
+      </div>
+    );
+  }
+
+  const weekProgress = progressSummary?.weekProgress || {};
+  const isUnlocked = weekProgress[Number(week)]?.isUnlocked ?? Number(week) === 1;
+  if (!isUnlocked) {
+    return (
+      <div className="page page--light">
+        <header className="page-hero page-hero--dark">
+          <div className="container page-hero__content">
+            <div className="page-hero__title">
+              <div>
+                <p className="page-hero__kicker">
+                  Workout Session
+                </p>
+                <h1 className="page-hero__headline">
+                  Week {week} - Day {day}
+                </h1>
+                <p className="page-hero__lede">
+                  Complete week {Number(week) - 1} workouts to unlock this week.
+                </p>
+              </div>
+              <Link to="/plan/overview" className="btn btn-ghost btn-link">
+                ← Plan Overview
+              </Link>
+            </div>
+          </div>
+        </header>
       </div>
     );
   }
@@ -32,15 +66,6 @@ const WorkoutDay = () => {
 
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const dayName = dayNames[parseInt(day) - 1];
-  const storagePrefix = useMemo(() => {
-    const token = localStorage.getItem('token') || 'guest';
-    const rawKey = user?.email || user?.user_id || user?.name || token;
-    return `fitplan_${String(rawKey).replace(/[^a-zA-Z0-9-_]/g, '_')}`;
-  }, [user]);
-  const workoutStorageKey = useMemo(
-    () => `${storagePrefix}_workout_${week}_${day}`,
-    [storagePrefix, week, day]
-  );
 
   const exerciseNames = useMemo(() => {
     if (!workoutData || workoutData.type === 'rest') return [];
@@ -53,24 +78,35 @@ const WorkoutDay = () => {
   }, [workoutData]);
 
   useEffect(() => {
-    const stored = localStorage.getItem(workoutStorageKey);
-    if (!stored) return;
-    try {
-      const data = JSON.parse(stored);
-      setIsCompleted(!!data.isCompleted);
-      setExerciseStatus(data.exerciseStatus || {});
-    } catch (err) {
-      console.error('Workout status load failed:', err);
-    }
-  }, [workoutStorageKey]);
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
-  useEffect(() => {
-    const payload = {
-      isCompleted,
-      exerciseStatus
+    let isActive = true;
+    const loadWorkoutStatus = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/user/workout/status?week=${week}&day=${day}`, {
+          method: 'GET',
+          headers: {
+            token,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!isActive) return;
+        setIsCompleted(!!data.isCompleted);
+        setExerciseStatus(data.exerciseStatus || {});
+      } catch (err) {
+        console.error('Workout status load failed:', err);
+      }
     };
-    localStorage.setItem(workoutStorageKey, JSON.stringify(payload));
-  }, [workoutStorageKey, isCompleted, exerciseStatus]);
+
+    loadWorkoutStatus();
+    return () => {
+      isActive = false;
+    };
+  }, [week, day]);
 
   useEffect(() => {
     if (!exerciseNames.length) return;
@@ -171,6 +207,55 @@ const WorkoutDay = () => {
     return Math.round(weight * minutes * 0.08 * intensity);
   }, [user, logData.workoutMinutes, workoutData.intensity]);
 
+  const mainExercises = workoutData.template?.main || [];
+  const mainCompletedCount = useMemo(() => (
+    mainExercises.reduce((acc, _exercise, index) => (
+      acc + (exerciseStatus[`${week}-${day}-main-${index}`] ? 1 : 0)
+    ), 0)
+  ), [mainExercises, exerciseStatus, week, day]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const totalExercises = mainExercises.length;
+    if (!token || totalExercises === 0) return;
+
+    const payloadKey = `${week}-${day}-${mainCompletedCount}-${totalExercises}`;
+    if (lastExerciseLogRef.current === payloadKey) return;
+    lastExerciseLogRef.current = payloadKey;
+
+    const isCompletedValue = mainCompletedCount >= totalExercises;
+
+    const logExerciseProgress = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/user/log-activity', {
+          method: 'POST',
+          headers: {
+            token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            week: parseInt(week),
+            day: parseInt(day),
+            isCompleted: isCompletedValue,
+            exercisesCompleted: mainCompletedCount,
+            exercisesTotal: totalExercises,
+            exerciseStatus
+          })
+        });
+
+        if (response.ok) {
+          setIsCompleted(isCompletedValue);
+          fetchProgressSummary?.();
+          window.dispatchEvent(new CustomEvent('fitplan-activity-updated'));
+        }
+      } catch (err) {
+        console.error('Auto log workout failed:', err);
+      }
+    };
+
+    logExerciseProgress();
+  }, [day, fetchProgressSummary, mainCompletedCount, mainExercises.length, week, exerciseStatus]);
+
   const handleLogWorkout = async (completedValue) => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -178,6 +263,8 @@ const WorkoutDay = () => {
     try {
       const calories = logData.caloriesBurned ? Number(logData.caloriesBurned) : estimatedCalories;
       const minutes = logData.workoutMinutes ? Number(logData.workoutMinutes) : 60;
+      const totalExercises = mainExercises.length;
+      const completedExercises = mainCompletedCount;
       const response = await fetch('http://localhost:5000/api/user/log-activity', {
         method: 'POST',
         headers: {
@@ -190,13 +277,18 @@ const WorkoutDay = () => {
           caloriesBurned: calories,
           workoutMinutes: minutes,
           performanceScore: logData.performanceScore ? Number(logData.performanceScore) : null,
-          isCompleted: completedValue
+          isCompleted: completedValue,
+          exercisesCompleted: totalExercises ? completedExercises : null,
+          exercisesTotal: totalExercises ? totalExercises : null,
+          exerciseStatus
         })
       });
 
       if (response.ok) {
         setIsCompleted(completedValue);
         setLogStatus(completedValue ? 'Workout completed and saved.' : 'Workout marked as not completed.');
+        fetchProgressSummary?.();
+        window.dispatchEvent(new CustomEvent('fitplan-activity-updated'));
       } else {
         setLogStatus('Unable to log workout.');
       }
@@ -305,6 +397,11 @@ const WorkoutDay = () => {
               <div className="workout-section__header">
                 <h3 className="workout-section__title text-accent--green">💪 Main Workout</h3>
                 <span className="workout-section__time">40 minutes</span>
+                {mainExercises.length > 0 && (
+                  <span className="workout-section__time">
+                    {mainCompletedCount}/{mainExercises.length} done
+                  </span>
+                )}
               </div>
               <div className="workout-exercises-grid workout-exercises-grid--main">
                 {workoutData.template.main.map((exercise, index) => (

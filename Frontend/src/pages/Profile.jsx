@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom'; // Added useNavigate
 import { useUser } from '../context/useUser';
 
 const Profile = () => {
-  const { user, updateUser, logout, fitnessData } = useUser(); // Destructure logout
+  const { user, updateUser, updateUserProfile, logout, fitnessData } = useUser(); // Destructure logout
   const navigate = useNavigate(); // Hook for redirection
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState(user || {});
   const [photos, setPhotos] = useState({ present: null, week1: null });
   const [photoNames, setPhotoNames] = useState({ present: '', week1: '' });
+  const [dailyWeight, setDailyWeight] = useState('');
+  const [dailyWeightStatus, setDailyWeightStatus] = useState(null);
 
   // Safety check: Don't render if data is missing
   if (!user || !fitnessData) {
@@ -57,6 +59,15 @@ const Profile = () => {
     const success = await updateUser(editData);
     if (success) {
       setIsEditing(false);
+    }
+  };
+
+  const handleDailyWeightSave = async () => {
+    if (!dailyWeight) return;
+    const success = await updateUserProfile({ weight: Number(dailyWeight) });
+    setDailyWeightStatus(success ? 'Saved' : 'Save failed');
+    if (success) {
+      setDailyWeight('');
     }
   };
 
@@ -344,7 +355,7 @@ const Profile = () => {
               <label className="form-label">Health Problems</label>
               {isEditing ? (
                 <div className="checkbox-group">
-                  {['none', 'knee_pain', 'back_pain', 'heart_condition', 'diabetes', 'asthma'].map(problem => (
+                  {['none', 'knee_pain', 'back_pain', 'heart_condition', 'asthma'].map(problem => (
                     <div
                       key={problem}
                       className={`checkbox-item ${editData.healthProblems?.includes(problem) ? 'selected' : ''}`}
@@ -482,6 +493,33 @@ const Profile = () => {
             <p className="profile-progress__note">
               Remaining: {Math.max(0, currentWeight - targetWeight)} kg
             </p>
+          </div>
+
+          <div className="card profile-card card--spaced">
+            <h3 className="section-title">Update Today's Weight</h3>
+            <div className="form-group">
+              <label className="form-label">Current Weight (kg)</label>
+              <input
+                type="number"
+                className="form-input"
+                value={dailyWeight}
+                onChange={(e) => setDailyWeight(e.target.value)}
+                placeholder="Enter today's weight"
+              />
+            </div>
+            <div className="profile-header__actions">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleDailyWeightSave}
+                disabled={!dailyWeight}
+              >
+                Save Weight
+              </button>
+              {dailyWeightStatus && (
+                <span className="profile-field">{dailyWeightStatus}</span>
+              )}
+            </div>
           </div>
 
           {/* Logout Zone */}

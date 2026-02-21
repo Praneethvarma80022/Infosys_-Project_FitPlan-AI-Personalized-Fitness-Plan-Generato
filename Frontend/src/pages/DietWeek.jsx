@@ -5,10 +5,43 @@ import dietsData from '../data/diets.json';
 
 const DietWeek = () => {
   const { week } = useParams();
-  const { fitnessData, user } = useUser();
+  const { fitnessData, user, progressSummary, fetchProgressSummary } = useUser();
+
+  useEffect(() => {
+    fetchProgressSummary?.();
+  }, [fetchProgressSummary]);
 
   if (!fitnessData) {
     return <div>Loading...</div>;
+  }
+
+  const weekProgress = progressSummary?.weekProgress || {};
+  const isUnlocked = weekProgress[Number(week)]?.isUnlocked ?? Number(week) === 1;
+  if (!isUnlocked) {
+    return (
+      <div className="page page--light">
+        <header className="page-hero page-hero--dark">
+          <div className="container page-hero__content">
+            <div className="page-hero__title">
+              <div>
+                <p className="page-hero__kicker">
+                  Nutrition Plan
+                </p>
+                <h1 className="page-hero__headline">
+                  Week {week} Diet Plan
+                </h1>
+                <p className="page-hero__lede">
+                  Complete week {Number(week) - 1} workouts to unlock this week.
+                </p>
+              </div>
+              <Link to="/plan/overview" className="btn btn-ghost btn-link">
+                ← Plan Overview
+              </Link>
+            </div>
+          </div>
+        </header>
+      </div>
+    );
   }
 
   const weekDiet = fitnessData.dietPlan[`week${week}`];
@@ -38,32 +71,8 @@ const DietWeek = () => {
     return lookup;
   }, []);
 
-  const storagePrefix = useMemo(() => {
-    const token = localStorage.getItem('token') || 'guest';
-    const rawKey = user?.email || user?.user_id || user?.name || token;
-    return `fitplan_${String(rawKey).replace(/[^a-zA-Z0-9-_]/g, '_')}`;
-  }, [user]);
-  const dietStorageKey = useMemo(
-    () => `${storagePrefix}_diet_week_${week}`,
-    [storagePrefix, week]
-  );
-
   const dayKey = `day${activeDay}`;
   const activeDayData = weekDiet[dayKey];
-
-  useEffect(() => {
-    const stored = localStorage.getItem(dietStorageKey);
-    if (!stored) return;
-    try {
-      setEatenMeals(JSON.parse(stored));
-    } catch (err) {
-      console.error('Diet status load failed:', err);
-    }
-  }, [dietStorageKey]);
-
-  useEffect(() => {
-    localStorage.setItem(dietStorageKey, JSON.stringify(eatenMeals));
-  }, [dietStorageKey, eatenMeals]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -82,16 +91,7 @@ const DietWeek = () => {
         if (!response.ok) return;
         const data = await response.json();
         const logs = data.logs || {};
-        setEatenMeals((prev) => {
-          const next = { ...prev };
-          Object.keys(logs).forEach((loggedDay) => {
-            next[loggedDay] = {
-              ...(prev[loggedDay] || {}),
-              ...logs[loggedDay]
-            };
-          });
-          return next;
-        });
+        setEatenMeals(logs);
       } catch (err) {
         console.error('Diet logs load failed:', err);
       }
@@ -124,6 +124,8 @@ const DietWeek = () => {
 
       if (response.ok) {
         setSaveStatus('Saved');
+        fetchProgressSummary?.();
+        window.dispatchEvent(new CustomEvent('fitplan-activity-updated'));
       } else {
         setSaveStatus('Save failed');
       }

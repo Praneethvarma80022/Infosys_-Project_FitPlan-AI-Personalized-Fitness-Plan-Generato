@@ -20,7 +20,6 @@ const Progress = () => {
   const { user, fitnessData, progressSummary, predictions, fetchProgressSummary, fetchPredictions, logFeedback } = useUser();
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackResult, setFeedbackResult] = useState(null);
-  const [activityRevision, setActivityRevision] = useState(0);
   const [themeMode, setThemeMode] = useState(() => (
     typeof document !== 'undefined' && document.body.classList.contains('dark-theme')
       ? 'dark'
@@ -50,79 +49,62 @@ const Progress = () => {
   }, []);
 
   useEffect(() => {
-    const handleRefresh = () => setActivityRevision(prev => prev + 1);
+    const handleRefresh = () => fetchProgressSummary();
     window.addEventListener('focus', handleRefresh);
     window.addEventListener('storage', handleRefresh);
     document.addEventListener('visibilitychange', handleRefresh);
+    const handleActivityUpdate = () => {
+      fetchProgressSummary();
+    };
+    window.addEventListener('fitplan-activity-updated', handleActivityUpdate);
     return () => {
       window.removeEventListener('focus', handleRefresh);
       window.removeEventListener('storage', handleRefresh);
       document.removeEventListener('visibilitychange', handleRefresh);
+      window.removeEventListener('fitplan-activity-updated', handleActivityUpdate);
     };
-  }, []);
+  }, [fetchProgressSummary]);
 
-  const currentWeek = 1;
   const totalWorkouts = 70; // 10 weeks * 7 days
   const completedWorkouts = progressSummary?.workoutCompletion?.completed || 0;
-
-  const storagePrefix = useMemo(() => {
-    const token = localStorage.getItem('token') || 'guest';
-    const rawKey = user?.email || user?.user_id || user?.name || token;
-    return `fitplan_${String(rawKey).replace(/[^a-zA-Z0-9-_]/g, '_')}`;
-  }, [user]);
-
-  const activityStats = useMemo(() => {
-    const stats = {
-      workoutCompleted: 0,
-      workoutByWeek: {},
-      mealsCompleted: 0
-    };
-
-    if (!storagePrefix) return stats;
-
-    for (let week = 1; week <= 10; week += 1) {
-      let weekCount = 0;
-      for (let day = 1; day <= 7; day += 1) {
-        const key = `${storagePrefix}_workout_${week}_${day}`;
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        try {
-          const data = JSON.parse(raw);
-          if (data?.isCompleted) {
-            stats.workoutCompleted += 1;
-            weekCount += 1;
-          }
-        } catch (err) {
-          console.error('Workout status parse failed:', err);
-        }
-      }
-      stats.workoutByWeek[week] = weekCount;
-    }
-
-    for (let week = 1; week <= 10; week += 1) {
-      const key = `${storagePrefix}_diet_week_${week}`;
-      const raw = localStorage.getItem(key);
-      if (!raw) continue;
-      try {
-        const data = JSON.parse(raw) || {};
-        Object.values(data).forEach((meals) => {
-          const mealData = meals || {};
-          ['breakfast', 'lunch', 'snack', 'dinner'].forEach((mealKey) => {
-            if (mealData[mealKey]) stats.mealsCompleted += 1;
-          });
-        });
-      } catch (err) {
-        console.error('Diet status parse failed:', err);
-      }
-    }
-
-    return stats;
-  }, [storagePrefix, activityRevision]);
-
-  const mergedCompletedWorkouts = Math.max(completedWorkouts, activityStats.workoutCompleted);
+  const backendWorkoutByWeek = progressSummary?.workoutByWeek || {};
+  const backendMealsByWeek = progressSummary?.mealByWeek || {};
+  const backendMealsCompleted = progressSummary?.mealCompletion?.completed || 0;
+  const mergedCompletedWorkouts = completedWorkouts;
+  const mergedMealsCompleted = backendMealsCompleted;
   const progressPercentage = totalWorkouts > 0 ? (mergedCompletedWorkouts / totalWorkouts) * 100 : 0;
   const totalMeals = 10 * 7 * 4;
-  const mealProgressPercentage = totalMeals > 0 ? (activityStats.mealsCompleted / totalMeals) * 100 : 0;
+  const mealProgressPercentage = totalMeals > 0 ? (mergedMealsCompleted / totalMeals) * 100 : 0;
+
+  const weeklyStats = useMemo(() => {
+    const stats = {};
+    for (let week = 1; week <= 10; week += 1) {
+      const workouts = backendWorkoutByWeek[week] || 0;
+      const meals = backendMealsByWeek[week] || 0;
+      stats[week] = {
+        workouts,
+        meals,
+        isComplete: workouts >= 7 && meals >= 28
+      };
+    }
+    return stats;
+  }, [backendWorkoutByWeek, backendMealsByWeek]);
+
+  const exerciseStats = useMemo(() => {
+    const completion = progressSummary?.exerciseCompletion || {};
+    return {
+      completed: completion.completed || 0,
+      total: completion.total || 0
+    };
+  }, [progressSummary]);
+
+  const currentWeek = useMemo(() => {
+    for (let week = 1; week <= 10; week += 1) {
+      if (!weeklyStats[week]?.isComplete) return week;
+    }
+    return 10;
+  }, [weeklyStats]);
+  const weekProgress = progressSummary?.weekProgress || {};
 
   const startWeight = progressSummary?.profile?.startWeight || fitnessData.startWeight || user.weight;
   const currentWeight = progressSummary?.profile?.currentWeight || user.weight;
@@ -135,6 +117,7 @@ const Progress = () => {
   const height = progressSummary?.profile?.height || user.height;
 
   const progressRows = progressSummary?.progress || [];
+  const profileHistory = progressSummary?.profileHistory || [];
   const startDate = fitnessData?.startDate || new Date().toISOString().slice(0, 10);
   const chartColors = {
     green: '#22c55e',
@@ -167,31 +150,96 @@ const Progress = () => {
   }), [baseChartScales]);
 
   const weightHistory = useMemo(() => {
+    if (profileHistory.length > 0) {
+      const entries = profileHistory
+        .map(row => ({
+          date: String(row.updated_at).slice(0, 10),
+          value: row.weight_kg
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      if (entries.length === 1) {
+        return [
+          { date: startDate, value: startWeight },
+          entries[0]
+        ];
+      }
+      const first = entries[0];
+      if (first && first.value !== startWeight) {
+        return [{ date: startDate, value: startWeight }, ...entries];
+      }
+      return entries;
+    }
     if (progressRows.length > 0) {
-      return progressRows.map(row => ({
+      const entries = progressRows.map(row => ({
         date: row.logged_date,
         value: row.weight_kg
       }));
+      if (entries.length === 1) {
+        const only = entries[0];
+        return [
+          { date: startDate, value: startWeight },
+          { date: only.date, value: only.value }
+        ];
+      }
+      return entries;
     }
-    return mockLabels.map((label, index) => ({
-      date: label,
-      value: mockWeight[index]
-    }));
-  }, [progressRows, mockLabels, mockWeight]);
+    return [
+      { date: startDate, value: startWeight },
+      { date: new Date().toISOString().slice(0, 10), value: currentWeight }
+    ];
+  }, [profileHistory, progressRows, startDate, startWeight, currentWeight]);
 
   const bmiHistory = useMemo(() => {
+    if (profileHistory.length > 0) {
+      const entries = profileHistory
+        .filter(row => row.bmi !== null && row.bmi !== undefined)
+        .map(row => ({
+          date: String(row.updated_at).slice(0, 10),
+          value: row.bmi
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      if (entries.length > 0) {
+        if (entries.length === 1 && height) {
+          return [
+            {
+              date: startDate,
+              value: Number((startWeight / ((height / 100) * (height / 100))).toFixed(1))
+            },
+            entries[0]
+          ];
+        }
+        if (height) {
+          const startBmi = Number((startWeight / ((height / 100) * (height / 100))).toFixed(1));
+          const first = entries[0];
+          if (first && first.value !== startBmi) {
+            return [{ date: startDate, value: startBmi }, ...entries];
+          }
+        }
+        return entries;
+      }
+    }
     if (progressRows.length > 0 && progressRows.some(row => row.bmi)) {
-      return progressRows.map(row => ({
+      const entries = progressRows.map(row => ({
         date: row.logged_date,
         value: row.bmi
       }));
+      if (entries.length === 1 && height) {
+        return [
+          {
+            date: startDate,
+            value: Number((startWeight / ((height / 100) * (height / 100))).toFixed(1))
+          },
+          entries[0]
+        ];
+      }
+      return entries;
     }
     if (!height) return [];
     return weightHistory.map(entry => ({
       date: entry.date,
       value: Number((entry.value / ((height / 100) * (height / 100))).toFixed(1))
     }));
-  }, [progressRows, height, weightHistory]);
+  }, [profileHistory, progressRows, height, weightHistory, startDate, startWeight]);
 
   const caloriesSeries = useMemo(() => {
     const map = progressSummary?.caloriesByDate || {};
@@ -209,6 +257,14 @@ const Progress = () => {
   }, [progressSummary, mockLabels]);
 
   const performanceSeries = useMemo(() => {
+    const performanceMap = progressSummary?.performanceByDate || {};
+    const backendLabels = Object.keys(performanceMap).sort();
+    if (backendLabels.length > 0) {
+      return {
+        labels: backendLabels,
+        values: backendLabels.map(label => performanceMap[label])
+      };
+    }
     const labels = progressRows.map(row => row.logged_date);
     const values = progressRows.map(row => row.performance_score || row.workout_minutes || 0);
     if (labels.length > 0) return { labels, values };
@@ -216,7 +272,7 @@ const Progress = () => {
       labels: mockLabels,
       values: [6, 7, 7, 8, 6, 8, 9]
     };
-  }, [progressRows, mockLabels]);
+  }, [progressSummary, progressRows, mockLabels]);
 
   const predictionSeries = useMemo(() => {
     const trend = predictions?.trend || [];
@@ -293,7 +349,7 @@ const Progress = () => {
           <div className="progress-row">
             <div className="progress-row__header">
               <span>Meals Logged</span>
-              <span>{activityStats.mealsCompleted}/{totalMeals} ({Math.round(mealProgressPercentage)}%)</span>
+              <span>{mergedMealsCompleted}/{totalMeals} ({Math.round(mealProgressPercentage)}%)</span>
             </div>
             <div className="progress-bar">
               <div 
@@ -339,6 +395,16 @@ const Progress = () => {
             <p className="metric-label">Workouts Done</p>
             <p className="metric-sub">
               {Math.max(0, totalWorkouts - mergedCompletedWorkouts)} remaining
+            </p>
+          </div>
+
+          <div className="card metric-card">
+            <h3 className="metric-value metric-value--green">
+              {exerciseStats.completed}
+            </h3>
+            <p className="metric-label">Exercises Done</p>
+            <p className="metric-sub">
+              {Math.max(0, exerciseStats.total - exerciseStats.completed)} remaining
             </p>
           </div>
           
@@ -451,7 +517,7 @@ const Progress = () => {
                 datasets: [
                   {
                     label: 'Completed',
-                    data: [mergedCompletedWorkouts, activityStats.mealsCompleted],
+                    data: [mergedCompletedWorkouts, mergedMealsCompleted],
                     backgroundColor: ['rgba(34, 197, 94, 0.6)', 'rgba(249, 115, 22, 0.6)'],
                     borderRadius: 8,
                     borderSkipped: false
@@ -544,10 +610,10 @@ const Progress = () => {
           <h3 className="section-title">Weekly Breakdown</h3>
           <div className="weekly-grid">
             {Array.from({ length: 10 }, (_, i) => i + 1).map(week => {
-              const weekCompleted = activityStats.workoutByWeek[week] || 0;
-              const isCompleted = weekCompleted === 7;
-              const isCurrent = week === currentWeek;
-              const isUpcoming = week > currentWeek;
+              const weekStats = weeklyStats[week] || { workouts: 0, meals: 0, isComplete: false };
+              const isCompleted = weekStats.isComplete;
+              const isUnlocked = week === 1 || weeklyStats[week - 1]?.isComplete || weekProgress[week]?.isUnlocked;
+              const isCurrent = isUnlocked && !isCompleted && week === currentWeek;
               
               return (
                 <div
@@ -556,11 +622,11 @@ const Progress = () => {
                 >
                   <h4>Week {week}</h4>
                   <p className="weekly-card__status">
-                    {isCompleted ? '✅ Completed' : isCurrent ? '🔄 In Progress' : '⏳ Upcoming'}
+                    {isCompleted ? '✅ Completed' : isUnlocked ? '🔄 In Progress' : '⏳ Locked'}
                   </p>
-                  {(isCompleted || isCurrent) && (
+                  {(isCompleted || isUnlocked) && (
                     <p className="weekly-card__count">
-                      {weekCompleted}/7 workouts
+                      {weekStats.workouts}/7 workouts • {weekStats.meals}/28 meals
                     </p>
                   )}
                 </div>

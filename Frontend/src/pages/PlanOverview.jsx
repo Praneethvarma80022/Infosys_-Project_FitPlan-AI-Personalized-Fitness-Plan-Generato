@@ -1,15 +1,30 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useUser } from '../context/useUser';
 
 const PlanOverview = () => {
-  const { user, fitnessData } = useUser();
+  const { user, fitnessData, progressSummary, fetchProgressSummary } = useUser();
+
+  useEffect(() => {
+    fetchProgressSummary?.();
+  }, [fetchProgressSummary]);
 
   if (!user || !fitnessData) {
     return <div>Loading...</div>;
   }
 
   const weeks = Array.from({ length: 10 }, (_, i) => i + 1);
+  const weekProgress = progressSummary?.weekProgress || {};
+  const workoutByWeek = progressSummary?.workoutByWeek || {};
+  const mealByWeek = progressSummary?.mealByWeek || {};
+  const currentWeek = useMemo(() => {
+    for (let week = 1; week <= 10; week += 1) {
+      const entry = weekProgress[week];
+      const isCompleted = entry?.isCompleted ?? ((workoutByWeek[week] || 0) >= 7 && (mealByWeek[week] || 0) >= 28);
+      if (!isCompleted) return week;
+    }
+    return 10;
+  }, [weekProgress, workoutByWeek, mealByWeek]);
 
   return (
     <div className="page page--light">
@@ -62,17 +77,24 @@ const PlanOverview = () => {
             {weeks.map(week => {
               const weekData = fitnessData.workoutPlan[`week${week}`];
               const phase = weekData.day1.phase || 'Foundation';
+              const isCurrent = week === currentWeek;
+              const isCompleted = !!weekProgress[week]?.isCompleted;
               
               return (
                 <div 
                   key={week}
-                  className={`card overview-card${week === 1 ? ' is-current' : ''}`}
+                  className={`card overview-card${isCurrent ? ' is-current' : ''}`}
                 >
                   <div className="overview-header">
                     <h4>Week {week}</h4>
-                    {week === 1 && (
+                    {isCurrent && (
                       <span className="overview-badge">
                         CURRENT
+                      </span>
+                    )}
+                    {isCompleted && !isCurrent && (
+                      <span className="overview-badge">
+                        DONE
                       </span>
                     )}
                   </div>

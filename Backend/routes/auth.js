@@ -59,6 +59,20 @@ router.post('/register', async (req, res) => {
       [userId, JSON.stringify(generatedPlan.workoutPlan), JSON.stringify(generatedPlan.dietPlan)]
     );
 
+    const weekRows = Array.from({ length: 10 }, (_, index) => [
+      userId,
+      index + 1,
+      index === 0,
+      false,
+      null
+    ]);
+    const weekPlaceholders = weekRows.map(() => '(?, ?, ?, ?, ?)').join(', ');
+    await connection.execute(
+      `INSERT INTO user_week_progress (user_id, week_number, is_unlocked, is_completed, completed_at)
+       VALUES ${weekPlaceholders}`,
+      weekRows.flat()
+    );
+
     await connection.commit();
     const token = jwt.sign({ user_id: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user_id: userId, message: 'Registration successful' });
