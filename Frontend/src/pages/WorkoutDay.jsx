@@ -10,6 +10,7 @@ const WorkoutDay = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [exerciseStatus, setExerciseStatus] = useState({});
   const [exerciseDetails, setExerciseDetails] = useState({});
+  const [statusLoaded, setStatusLoaded] = useState(false);
   const lastExerciseLogRef = useRef(null);
   const [logData, setLogData] = useState({
     caloriesBurned: '',
@@ -79,12 +80,16 @@ const WorkoutDay = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      setStatusLoaded(true);
+      return;
+    }
 
     let isActive = true;
+    setStatusLoaded(false);
     const loadWorkoutStatus = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/user/workout/status?week=${week}&day=${day}`, {
+        const response = await fetch(`/api/user/workout/status?week=${week}&day=${day}`, {
           method: 'GET',
           headers: {
             token,
@@ -92,13 +97,18 @@ const WorkoutDay = () => {
           }
         });
 
-        if (!response.ok) return;
+        if (!response.ok) {
+          if (isActive) setStatusLoaded(true);
+          return;
+        }
         const data = await response.json();
         if (!isActive) return;
         setIsCompleted(!!data.isCompleted);
         setExerciseStatus(data.exerciseStatus || {});
+        setStatusLoaded(true);
       } catch (err) {
         console.error('Workout status load failed:', err);
+        if (isActive) setStatusLoaded(true);
       }
     };
 
@@ -120,7 +130,7 @@ const WorkoutDay = () => {
     const loadExerciseDetails = async () => {
       const results = await Promise.all(missingNames.map(async (name) => {
         try {
-          const response = await fetch(`http://localhost:5000/api/exercises/lookup?name=${encodeURIComponent(name)}`);
+          const response = await fetch(`/api/exercises/lookup?name=${encodeURIComponent(name)}`);
           if (!response.ok) return { name, detail: null };
           const data = await response.json();
           return { name, detail: data };
@@ -215,6 +225,7 @@ const WorkoutDay = () => {
   ), [mainExercises, exerciseStatus, week, day]);
 
   useEffect(() => {
+    if (!statusLoaded) return;
     const token = localStorage.getItem('token');
     const totalExercises = mainExercises.length;
     if (!token || totalExercises === 0) return;
@@ -223,11 +234,11 @@ const WorkoutDay = () => {
     if (lastExerciseLogRef.current === payloadKey) return;
     lastExerciseLogRef.current = payloadKey;
 
-    const isCompletedValue = mainCompletedCount >= totalExercises;
+    const isCompletedValue = mainCompletedCount > 0;
 
     const logExerciseProgress = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/user/log-activity', {
+        const response = await fetch('/api/user/log-activity', {
           method: 'POST',
           headers: {
             token,
@@ -254,7 +265,7 @@ const WorkoutDay = () => {
     };
 
     logExerciseProgress();
-  }, [day, fetchProgressSummary, mainCompletedCount, mainExercises.length, week, exerciseStatus]);
+  }, [statusLoaded, day, fetchProgressSummary, mainCompletedCount, mainExercises.length, week, exerciseStatus]);
 
   const handleLogWorkout = async (completedValue) => {
     const token = localStorage.getItem('token');
@@ -265,7 +276,7 @@ const WorkoutDay = () => {
       const minutes = logData.workoutMinutes ? Number(logData.workoutMinutes) : 60;
       const totalExercises = mainExercises.length;
       const completedExercises = mainCompletedCount;
-      const response = await fetch('http://localhost:5000/api/user/log-activity', {
+      const response = await fetch('/api/user/log-activity', {
         method: 'POST',
         headers: {
           token,

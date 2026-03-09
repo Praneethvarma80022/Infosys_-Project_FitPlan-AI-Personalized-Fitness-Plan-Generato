@@ -5,8 +5,9 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 
 router.post('/register', async (req, res) => {
-  const connection = await pool.getConnection();
+  let connection;
   try {
+    connection = await pool.getConnection();
     const { 
       email, 
       password, 
@@ -84,9 +85,9 @@ router.post('/register', async (req, res) => {
       console.error('Rollback failed:', rollbackError);
     }
     console.error(err);
-    res.status(500).json('Server Error');
+    res.status(500).json({ error: 'Server Error' });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 });
 
@@ -96,17 +97,17 @@ router.post('/login', async (req, res) => {
     
     const [users] = await pool.execute('SELECT * FROM users WHERE email = ?', [email]);
     
-    if (users.length === 0) return res.status(401).json('Invalid Credential');
+    if (users.length === 0) return res.status(401).json({ error: 'Invalid Credential' });
     
     const validPassword = await bcrypt.compare(password, users[0].password_hash);
-    if (!validPassword) return res.status(401).json('Invalid Credential');
+    if (!validPassword) return res.status(401).json({ error: 'Invalid Credential' });
 
     const token = jwt.sign({ user_id: users[0].user_id }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token });
 
   } catch (err) {
     console.error(err);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 

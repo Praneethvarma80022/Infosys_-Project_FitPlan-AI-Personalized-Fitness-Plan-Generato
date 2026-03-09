@@ -7,6 +7,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const exerciseRoutes = require('./routes/exercises');
+const mindvoiceRoutes = require('./routes/mindvoice');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,6 +18,7 @@ app.use('/exercises', express.static(path.join(__dirname, '..', 'exercises')));
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/exercises', exerciseRoutes);
+app.use('/api', mindvoiceRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

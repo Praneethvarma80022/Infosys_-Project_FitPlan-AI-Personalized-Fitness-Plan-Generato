@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'; // Removed BrowserRouter import
+import React, { useEffect, useRef, useState } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { UserProvider } from './context/UserContext';
 import { useUser } from './context/useUser';
 
@@ -18,11 +18,11 @@ import SiteFooter from './components/SiteFooter';
 
 const ProtectedRoute = ({ children }) => {
   const { isRegistered, loading } = useUser();
-  
+
   if (loading) {
-    return <div style={{display: 'flex', justifyContent: 'center', marginTop: '2rem'}}>Loading...</div>; 
+    return <div style={{display: 'flex', justifyContent: 'center', marginTop: '2rem'}}>Loading...</div>;
   }
-  
+
   return isRegistered ? children : <Navigate to="/login" />;
 };
 
@@ -32,11 +32,11 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      
+
       {/* Public Routes */}
       <Route path="/register" element={isRegistered ? <Navigate to="/dashboard" /> : <Register />} />
       <Route path="/login" element={isRegistered ? <Navigate to="/dashboard" /> : <Login />} />
-      
+
       {/* Protected Routes */}
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/plan/overview" element={<ProtectedRoute><PlanOverview /></ProtectedRoute>} />
@@ -55,17 +55,48 @@ const ScrollToTop = () => {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [pathname]);
 
+  // Also scroll to top on initial page load / refresh
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
+
   return null;
+};
+
+const PageLoader = () => {
+  const { pathname } = useLocation();
+  const [loading, setLoading] = useState(false);
+  const prevPath = useRef(pathname);
+
+  useEffect(() => {
+    if (pathname !== prevPath.current) {
+      prevPath.current = pathname;
+      setLoading(true);
+      const timer = setTimeout(() => setLoading(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname]);
+
+  if (!loading) return null;
+
+  return (
+    <div className="page-loader-overlay">
+      <div className="page-loader-content">
+        <div className="page-loader-spinner" />
+        <p className="page-loader-text">Loading...</p>
+      </div>
+    </div>
+  );
 };
 
 function App() {
   return (
     <UserProvider>
-      {/* Router was removed from here because it's now in main.jsx */}
       <div className="App app-shell">
         <SiteNavbar />
         <main className="app-main">
           <ScrollToTop />
+          <PageLoader />
           <AppRoutes />
         </main>
         <SiteFooter />

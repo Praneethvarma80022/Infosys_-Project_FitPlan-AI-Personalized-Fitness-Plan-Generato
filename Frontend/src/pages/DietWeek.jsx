@@ -80,7 +80,7 @@ const DietWeek = () => {
 
     const loadLogs = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/user/diet/logs?week=${week}`, {
+        const response = await fetch(`/api/user/diet/logs?week=${week}`, {
           method: 'GET',
           headers: {
             token,
@@ -106,7 +106,7 @@ const DietWeek = () => {
 
     try {
       const meal = activeDayData.meals[mealKey];
-      const response = await fetch('http://localhost:5000/api/user/diet/log', {
+      const response = await fetch('/api/user/diet/log', {
         method: 'POST',
         headers: {
           token,

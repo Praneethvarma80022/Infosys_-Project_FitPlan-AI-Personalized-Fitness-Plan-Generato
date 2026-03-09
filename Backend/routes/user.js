@@ -4,13 +4,13 @@ const jwt = require('jsonwebtoken');
 
 const authorize = (req, res, next) => {
   const token = req.header('token');
-  if (!token) return res.status(403).json('Not Authorized');
+  if (!token) return res.status(403).json({ error: 'Not Authorized' });
   try {
     const verify = jwt.verify(token, process.env.JWT_SECRET);
     req.user = verify.user_id;
     next();
   } catch (err) {
-    res.status(403).json('Invalid Token');
+    res.status(403).json({ error: 'Invalid Token' });
   }
 };
 
@@ -62,7 +62,7 @@ router.get('/dashboard', authorize, async (req, res) => {
       [req.user]
     );
 
-    if (rows.length === 0) return res.status(404).json('User data not found');
+    if (rows.length === 0) return res.status(404).json({ error: 'User data not found' });
 
     const data = rows[0];
     const workoutPlan = typeof data.workout_plan_json === 'string'
@@ -116,7 +116,7 @@ router.post('/log-activity', authorize, async (req, res) => {
     const parsedCompleted = Number.isFinite(Number(exercisesCompleted)) ? Number(exercisesCompleted) : null;
     const parsedTotal = Number.isFinite(Number(exercisesTotal)) ? Number(exercisesTotal) : null;
     const completedByExercises = parsedTotal !== null && parsedTotal > 0
-      ? (parsedCompleted || 0) >= parsedTotal
+      ? (parsedCompleted || 0) > 0
       : null;
     const completed = completedByExercises !== null
       ? completedByExercises
@@ -157,22 +157,22 @@ router.post('/log-activity', authorize, async (req, res) => {
        FROM daily_activity
        WHERE user_id = ? AND week_number = ?
          AND (
-           (exercises_total IS NOT NULL AND exercises_total > 0 AND exercises_completed >= exercises_total)
+           (exercises_total IS NOT NULL AND exercises_total > 0 AND exercises_completed > 0)
            OR (exercises_total IS NULL AND is_workout_completed = TRUE)
            OR (exercises_total = 0 AND is_workout_completed = TRUE)
          )`,
       [req.user, week]
     );
     const [mealRows] = await pool.execute(
-      `SELECT COUNT(*) AS completed_meals
+      `SELECT COUNT(DISTINCT day_number) AS completed_diet_days
        FROM meal_logs
        WHERE user_id = ? AND week_number = ? AND is_eaten = TRUE`,
       [req.user, week]
     );
 
     const completedDays = weekRows[0]?.completed_days || 0;
-    const completedMeals = mealRows[0]?.completed_meals || 0;
-    if (completedDays >= 7 && completedMeals >= 28) {
+    const completedDietDays = mealRows[0]?.completed_diet_days || 0;
+    if (completedDays >= 7 && completedDietDays >= 7) {
       await pool.execute(
         `UPDATE user_week_progress
          SET is_completed = TRUE, completed_at = CURDATE()
@@ -191,7 +191,7 @@ router.post('/log-activity', authorize, async (req, res) => {
       }
     }
 
-    res.json('Activity Logged');
+    res.json({ message: 'Activity Logged' });
   } catch (err) {
     console.error(err);
     res.status(500).send('Server Error');
@@ -267,19 +267,24 @@ router.post('/diet/log', authorize, async (req, res) => {
     const [weekRows] = await pool.execute(
       `SELECT COUNT(*) AS completed_days
        FROM daily_activity
-       WHERE user_id = ? AND week_number = ? AND is_workout_completed = TRUE`,
+       WHERE user_id = ? AND week_number = ?
+         AND (
+           (exercises_total IS NOT NULL AND exercises_total > 0 AND exercises_completed > 0)
+           OR (exercises_total IS NULL AND is_workout_completed = TRUE)
+           OR (exercises_total = 0 AND is_workout_completed = TRUE)
+         )`,
       [req.user, week]
     );
     const [mealRows] = await pool.execute(
-      `SELECT COUNT(*) AS completed_meals
+      `SELECT COUNT(DISTINCT day_number) AS completed_diet_days
        FROM meal_logs
        WHERE user_id = ? AND week_number = ? AND is_eaten = TRUE`,
       [req.user, week]
     );
 
     const completedDays = weekRows[0]?.completed_days || 0;
-    const completedMeals = mealRows[0]?.completed_meals || 0;
-    if (completedDays >= 7 && completedMeals >= 28) {
+    const completedDietDays = mealRows[0]?.completed_diet_days || 0;
+    if (completedDays >= 7 && completedDietDays >= 7) {
       await pool.execute(
         `UPDATE user_week_progress
          SET is_completed = TRUE, completed_at = CURDATE()
@@ -335,7 +340,7 @@ router.get('/profile', authorize, async (req, res) => {
       `SELECT * FROM user_profiles WHERE user_id = ?`,
       [req.user]
     );
-    if (profiles.length === 0) return res.status(404).json('User not found');
+    if (profiles.length === 0) return res.status(404).json({ error: 'User not found' });
 
     const profile = profiles[0];
     const [photos] = await pool.execute(
@@ -589,7 +594,7 @@ router.get('/progress/summary', authorize, async (req, res) => {
     const workoutByWeek = activityRows.reduce((acc, row) => {
       const hasExerciseTotals = row.exercises_total !== null && row.exercises_total !== undefined;
       const isCompletedByExercises = hasExerciseTotals && row.exercises_total > 0
-        ? row.exercises_completed >= row.exercises_total
+        ? row.exercises_completed > 0
         : null;
       const isCompleted = isCompletedByExercises !== null
         ? isCompletedByExercises
@@ -608,11 +613,18 @@ router.get('/progress/summary', authorize, async (req, res) => {
     );
 
     const mealByWeek = {};
+    const mealDaysByWeek = {};
+    const seenMealDays = new Set();
     let mealCompleted = 0;
     mealRows.forEach(row => {
       if (!row.is_eaten) return;
       mealCompleted += 1;
       mealByWeek[row.week_number] = (mealByWeek[row.week_number] || 0) + 1;
+      const key = `${row.week_number}-${row.day_number}`;
+      if (!seenMealDays.has(key)) {
+        seenMealDays.add(key);
+        mealDaysByWeek[row.week_number] = (mealDaysByWeek[row.week_number] || 0) + 1;
+      }
     });
 
     const caloriesByDate = {};
@@ -620,7 +632,7 @@ router.get('/progress/summary', authorize, async (req, res) => {
     activityRows.forEach(row => {
       const hasExerciseTotals = row.exercises_total !== null && row.exercises_total !== undefined;
       const isCompletedByExercises = hasExerciseTotals && row.exercises_total > 0
-        ? row.exercises_completed >= row.exercises_total
+        ? row.exercises_completed > 0
         : null;
       const isCompleted = isCompletedByExercises !== null
         ? isCompletedByExercises
@@ -635,7 +647,7 @@ router.get('/progress/summary', authorize, async (req, res) => {
     const workoutCompletion = activityRows.reduce((acc, row) => {
       const hasExerciseTotals = row.exercises_total !== null && row.exercises_total !== undefined;
       const isCompletedByExercises = hasExerciseTotals && row.exercises_total > 0
-        ? row.exercises_completed >= row.exercises_total
+        ? row.exercises_completed > 0
         : null;
       const isCompleted = isCompletedByExercises !== null
         ? isCompletedByExercises
@@ -671,11 +683,11 @@ router.get('/progress/summary', authorize, async (req, res) => {
     for (let week = 1; week <= 10; week += 1) {
       const entry = rawWeekProgress[week];
       const workouts = workoutByWeek[week] || 0;
-      const meals = mealByWeek[week] || 0;
-      const completed = entry?.isCompleted ?? (workouts >= 7 && meals >= 28);
+      const mealDays = mealDaysByWeek[week] || 0;
+      const completed = entry?.isCompleted ?? (workouts >= 7 && mealDays >= 7);
       const prevCompleted = week === 1
         ? true
-        : (rawWeekProgress[week - 1]?.isCompleted ?? (((workoutByWeek[week - 1] || 0) >= 7) && ((mealByWeek[week - 1] || 0) >= 28)));
+        : (rawWeekProgress[week - 1]?.isCompleted ?? (((workoutByWeek[week - 1] || 0) >= 7) && ((mealDaysByWeek[week - 1] || 0) >= 7)));
       const unlocked = entry?.isUnlocked ?? (week === 1 || prevCompleted);
       weekProgress[week] = {
         isUnlocked: unlocked,
@@ -740,7 +752,7 @@ router.get('/recommendations', authorize, async (req, res) => {
        FROM user_profiles WHERE user_id = ?`,
       [req.user]
     );
-    if (profiles.length === 0) return res.status(404).json('User not found');
+    if (profiles.length === 0) return res.status(404).json({ error: 'User not found' });
 
     const profile = profiles[0];
     const bmi = calculateBMI(profile.height_cm, profile.current_weight_kg);

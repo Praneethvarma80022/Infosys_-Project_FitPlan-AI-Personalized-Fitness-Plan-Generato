@@ -270,7 +270,7 @@ export const UserProvider = ({ children }) => {
 
   const fetchDashboardData = async (token) => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/dashboard', {
+      const response = await fetch('/api/user/dashboard', {
         method: 'GET',
         headers: {
           'token': token,
@@ -307,7 +307,7 @@ export const UserProvider = ({ children }) => {
 
   const fetchProgressSummary = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/progress/summary', {
+      const response = await fetch('/api/user/progress/summary', {
         method: 'GET',
         headers: getAuthHeaders()
       });
@@ -325,7 +325,7 @@ export const UserProvider = ({ children }) => {
 
   const fetchRecommendations = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/recommendations', {
+      const response = await fetch('/api/user/recommendations', {
         method: 'GET',
         headers: getAuthHeaders()
       });
@@ -343,7 +343,7 @@ export const UserProvider = ({ children }) => {
 
   const fetchPredictions = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/predictions', {
+      const response = await fetch('/api/user/predictions', {
         method: 'GET',
         headers: getAuthHeaders()
       });
@@ -361,7 +361,7 @@ export const UserProvider = ({ children }) => {
 
   const loginUser = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -384,7 +384,7 @@ export const UserProvider = ({ children }) => {
     try {
       const generatedPlan = generateFitnessData(formData);
 
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -412,7 +412,7 @@ export const UserProvider = ({ children }) => {
 
   const updateUserProfile = async (updates) => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/profile', {
+      const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(updates)
@@ -436,7 +436,7 @@ export const UserProvider = ({ children }) => {
 
   const logFeedback = async (payload) => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/feedback', {
+      const response = await fetch('/api/user/feedback', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(payload)
@@ -451,7 +451,7 @@ export const UserProvider = ({ children }) => {
 
   const logProgress = async (payload) => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/progress', {
+      const response = await fetch('/api/user/progress', {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(payload)
